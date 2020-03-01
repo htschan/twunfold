@@ -30,3 +30,5 @@ npm-debug.log*
 /plugins
 /www
 src/twappconfig.ts
+src/environments/environment.prod.ts
+src/environments/environment.ts
