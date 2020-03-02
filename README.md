@@ -1,4 +1,10 @@
 
+# Ionic
+
+`ionic build --prod`
+
+`ionic serve`
+
 # Firebase hosting setup as PWA
 
 [PWA Hosting setup in Firebase](https://ionicframework.com/docs/angular/pwa)
@@ -10,3 +16,5 @@
 Deploy the webapp
 
 `firebase deploy --only hosting:twunfold`
+
+`firebase deploy --only functions`

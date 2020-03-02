@@ -5,6 +5,7 @@ import { tap, catchError } from 'rxjs/operators';
 import { IAppConfig } from '../shared/IAppConfig';
 import { APP_CONFIG_DI } from 'src/twappconfig';
 import { UrlService } from './url.service';
+import * as firebase from 'firebase';
 
 
 @Injectable({
@@ -25,8 +26,8 @@ export class TwclientService {
     };
   }
 
-  getRate(): Observable<DtoRate[]> {
-    const url = this.urlService.getRateUrl();
+  getRate(sourceCurrency, targetCurrency): Observable<DtoRate[]> {
+    const url = this.urlService.getRateUrl(sourceCurrency, targetCurrency);
     this.httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
@@ -34,6 +35,13 @@ export class TwclientService {
       })
     };
     return this.http.get<any>(url[0], this.httpOptions).pipe(catchError(this.handleError('getRate', [])));
+  }
+
+  addMessage(message) {
+    const addMessage = firebase.functions().httpsCallable('addMessage');
+    addMessage({ text: message }).then(result => {
+      console.log(result);
+    });
   }
 
   /**
@@ -64,8 +72,10 @@ export class TwclientService {
 }
 
 export class DtoRate {
-  rate: string;
+  rate: number;
   source: string;
   target: string;
   time: string;
+  trend: number;
+  diff: number;
 }

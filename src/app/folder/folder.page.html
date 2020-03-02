@@ -14,18 +14,10 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-button>Button</ion-button>
-  <div id="container">
-    <strong class="capitalize">{{ folder }}</strong>
-    <p>
-      Explore
-      <a
-        target="_blank"
-        rel="noopener noreferrer"
-        href="https://ionicframework.com/docs/components"
-      >
-        UI Components
-      </a>
-    </p>
+  <div>
+    Hi chat
+  </div>
+  <div>
+    <ion-button (click)='addMessage("hallo")'>Add Message</ion-button>
   </div>
 </ion-content>

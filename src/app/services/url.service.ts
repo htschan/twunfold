@@ -11,13 +11,16 @@ export class UrlService {
     @Inject(APP_CONFIG_DI) private appConfig: IAppConfig
   ) { }
 
-  getRateUrl(): [string, string] {
+  getRateUrl(sourceCurrency, targetCurrency): [string, string] {
     let url = this.appConfig.TwUrl;
     let token = this.appConfig.Tk1;
     if (this.appConfig.Sandbox) {
       url = this.appConfig.TwSandboxUrl;
       token = this.appConfig.SandboxTk1;
     }
-    return [url + this.appConfig.UrlRate, token];
+    const urlRate = this.appConfig.UrlRate
+      .replace('<sourceCurrency>', sourceCurrency)
+      .replace('<targetCurrency>', targetCurrency);
+    return [url + urlRate, token];
   }
 }
