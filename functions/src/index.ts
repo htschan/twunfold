@@ -2,7 +2,26 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const axios = require('axios').default;
 admin.initializeApp();
+
+exports.getAuthorization = function () {
+    const mode = functions.config().global.mode;
+    if (mode === "prod") {
+        return functions.config().tw1.prod.ro_token;
+    } else {
+        return functions.config().tw1.sandbox.ro_token;
+    }
+}
+
+exports.getUrl = function () {
+    const mode = functions.config().global.mode;
+    if (mode === "prod") {
+        return functions.config().tw1.prod.url;
+    } else {
+        return functions.config().tw1.sandbox.url;
+    }
+}
 
 // Adds two numbers to each other.
 exports.addNumbers = functions.https.onCall((data: any) => {
@@ -89,26 +108,21 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
             'while authenticated.');
     }
 
-    
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization();
 
-
-    const uid = context.auth.uid;
-    const name = context.auth.token.name || null;
-    const picture = context.auth.token.picture || null;
-    const email = context.auth.token.email || null;
-
-    // Saving the new message to the Realtime Database.
-    const sanitizedMessage = "text"; // Sanitize the message.
-    return admin.database().ref('/messages').push({
-        text: sanitizedMessage,
-        author: { uid, name, picture, email },
-    }).then(() => {
-        console.log('New Message written');
-        // Returning the sanitized message to the client.
-        return { text: sanitizedMessage };
-    })
-        .catch((error: any) => {
-            // Re-throwing the error as an HttpsError so that the client gets the error details.
+    return axios.get(`${exports.getUrl()}/v1/rates?source=${srcCry}&target=${tgtCry}`)
+        .then(function (response: any) {
+            // handle success
+            console.log(`The response was [${response.data[0].rate}] time [${response.data[0].time}] `);
+            console.log(JSON.stringify(response.data[0]));
+            return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
             throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data[0];
         });
 });

@@ -13,6 +13,8 @@
 
 [Adding Firebase Authentication to PWA with Ionic 4, Angular and AngularFire](https://medium.com/@AnkitMaheshwariIn/adding-firebase-authentication-to-pwa-with-ionic-4-angular-and-angularfire-e7cb1caf953)
 
+[Build and Debug Firebase Functions in VSCode](https://medium.com/@david_mccoy/build-and-debug-firebase-functions-in-vscode-73efb76166cf)
+
 Deploy the webapp
 
 `firebase deploy --only hosting:twunfold`

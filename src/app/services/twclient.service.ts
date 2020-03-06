@@ -1,10 +1,5 @@
-import { Injectable, Inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { IAppConfig } from '../shared/IAppConfig';
-import { APP_CONFIG_DI } from 'src/twappconfig';
-import { UrlService } from './url.service';
 import * as firebase from 'firebase';
 
 
@@ -12,29 +7,15 @@ import * as firebase from 'firebase';
   providedIn: 'root'
 })
 export class TwclientService {
-  httpOptions = {};
 
-  constructor(
-    @Inject(APP_CONFIG_DI) private appConfig: IAppConfig,
-    private urlService: UrlService,
-    private http: HttpClient) {
-    this.httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        Authorization: appConfig.Tk1
-      })
-    };
-  }
+  constructor() { }
 
-  getRate(sourceCurrency, targetCurrency): Observable<DtoRate[]> {
-    const url = this.urlService.getRateUrl(sourceCurrency, targetCurrency);
-    this.httpOptions = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        Authorization: url[1]
-      })
-    };
-    return this.http.get<any>(url[0], this.httpOptions).pipe(catchError(this.handleError('getRate', [])));
+  getRate(sourceCurrency, targetCurrency): any {
+    const addMessage = firebase.functions().httpsCallable('getRate');
+    return addMessage({ sourceCurrency, targetCurrency })
+      .then(result => {
+        return result.data;
+      });
   }
 
   addMessage(message) {

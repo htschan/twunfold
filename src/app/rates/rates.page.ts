@@ -23,14 +23,14 @@ export class RatesPage implements OnInit {
   }
 
   async getRate(event) {
-    this.twClient.getRate('CHF', 'THB').subscribe((data: DtoRate[]) => {
-      if (this.rates.length > 0 && this.rates[0].rate === data[0].rate) {
-        this.rates[0].time = data[0].time;
+    this.twClient.getRate('CHF', 'THB').then(data => {
+      if (this.rates.length > 0 && this.rates[0].rate === data.rate) {
+        this.rates[0].time = data.time;
       } else {
         if (this.rates.length > 8) {
           this.rates.pop();
         }
-        this.rates.push(data[0]);
+        this.rates.push(data);
         this.rates.sort((a, b) => (a.time > b.time) ? -1 : 1);
       }
       if (this.rates.length > 1) {

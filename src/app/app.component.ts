@@ -16,6 +16,11 @@ export class AppComponent implements OnInit {
   public selectedIndex = 0;
   public appPages = [
     {
+      title: 'Rates',
+      url: 'rates',
+      icon: 'calculator'
+    },
+    {
       title: 'Chat',
       url: '/folder/Inbox',
       icon: 'chatbubbles'
@@ -24,11 +29,6 @@ export class AppComponent implements OnInit {
       title: 'Outbox',
       url: '/folder/Outbox',
       icon: 'paper-plane'
-    },
-    {
-      title: 'Rates',
-      url: 'rates',
-      icon: 'calculator'
     }
   ];
   public labels = ['Family', 'Friends', 'Notes', 'Work'];
