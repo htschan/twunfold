@@ -5,21 +5,33 @@ const admin = require('firebase-admin');
 const axios = require('axios').default;
 admin.initializeApp();
 
-exports.getAuthorization = function () {
+exports.getAuthorization = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
-        return functions.config().tw1.prod.ro_token;
+        if (acct === "tw1")
+            return functions.config().tw1.prod.ro_token;
+        else if (acct === "tw2")
+            return functions.config().tw2.prod.ro_token;
     } else {
-        return functions.config().tw1.sandbox.ro_token;
+        if (acct === "tw1")
+            return functions.config().tw1.sandbox.ro_token;
+        else if (acct === "tw2")
+            return functions.config().tw2.sandbox.ro_token;
     }
 }
 
-exports.getUrl = function () {
+exports.getUrl = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
-        return functions.config().tw1.prod.url;
+        if (acct === "tw1")
+            return functions.config().tw1.prod.url;
+        else if (acct === "tw2")
+            return functions.config().tw2.prod.url;
     } else {
-        return functions.config().tw1.sandbox.url;
+        if (acct === "tw1")
+            return functions.config().tw1.sandbox.url;
+        else if (acct === "tw2")
+            return functions.config().tw2.sandbox.url;
     }
 }
 
@@ -108,14 +120,47 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
             'while authenticated.');
     }
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization();
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization('tw1');
 
-    return axios.get(`${exports.getUrl()}/v1/rates?source=${srcCry}&target=${tgtCry}`)
+    return axios.get(`${exports.getUrl('tw1')}/v1/rates?source=${srcCry}&target=${tgtCry}`)
         .then(function (response: any) {
             // handle success
-            console.log(`The response was [${response.data[0].rate}] time [${response.data[0].time}] `);
-            console.log(JSON.stringify(response.data[0]));
             return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data[0];
+        });
+});
+
+// Get the exchange rate for CHF <-> THB
+exports.getBalance = functions.https.onCall((data: any, context: any) => {
+    const acct = data.account;
+    // Checking attribute.
+    if (!(typeof acct === 'string') || acct.length !== 3) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one arguments "account" containing the account shortcut.');
+    }
+    // Checking that the user is authenticated.
+    if (!context.auth) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+            'while authenticated.');
+    }
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+
+    return axios.get(`${exports.getUrl(acct)}/v1/profiles`)
+        .then(function (response: any) {
+            // handle success
+            return response.data[0].id;
+        })
+        .then(function (id: any) {
+            return axios.get(`${exports.getUrl(acct)}/v1/borderless-accounts?profileId=${id}`);
         })
         .catch(function (error: any) {
             // handle error

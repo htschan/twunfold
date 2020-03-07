@@ -17,9 +17,6 @@ import { environment } from '../environments/environment';
 /*
 export const APP_CONFIG_VAL: IAppConfig = {
 
-  TwUrl: 'https://someurl.com',
-  Tk1: 'xxxxxxx-yyyy-yyyy-yyyy-xxxxxxxxx',
-  Tk2: 'xxxxxxx-yyyy-yyyy-yyyy-xxxxxxxxx'
 };
 */
 

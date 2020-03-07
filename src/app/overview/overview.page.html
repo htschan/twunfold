@@ -1,0 +1,60 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
+    <ion-title>Overview</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="getRate($event);getBalance($event)">
+    <ion-refresher-content
+      pullingIcon="arrow-dropdown"
+      pullingText="Pull to refresh"
+      refreshingSpinner="circles"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <p>Saldo</p>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Hans {{balTw1C2?.currency}}&nbsp;{{balTw1C2?.amount?.value}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>
+        
+      </p>
+    </ion-card-content>
+  </ion-card>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Hans {{balTw1C1?.currency}}&nbsp;{{balTw1C1?.amount?.value}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>
+        
+      </p>
+    </ion-card-content>
+  </ion-card>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>La-Iad {{balTw1C2?.currency}}&nbsp;{{balTw1C2?.amount?.value}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>
+        
+      </p>
+    </ion-card-content>
+  </ion-card>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>1 CHF = THB {{rate?.rate?.toFixed(4)}} </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>
+        <ion-datetime value="{{rate?.time}}" display-format="HH:mm" readonly="true"></ion-datetime>
+      </p>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

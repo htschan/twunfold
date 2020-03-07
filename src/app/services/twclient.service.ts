@@ -11,8 +11,16 @@ export class TwclientService {
   constructor() { }
 
   getRate(sourceCurrency, targetCurrency): any {
-    const addMessage = firebase.functions().httpsCallable('getRate');
-    return addMessage({ sourceCurrency, targetCurrency })
+    const f = firebase.functions().httpsCallable('getRate');
+    return f({ sourceCurrency, targetCurrency })
+      .then(result => {
+        return result.data;
+      });
+  }
+
+  getBalance(acct: string): any {
+    const f = firebase.functions().httpsCallable('getBalance');
+    return f({account: acct})
       .then(result => {
         return result.data;
       });

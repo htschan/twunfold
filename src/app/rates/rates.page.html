@@ -22,7 +22,7 @@
       <ion-icon *ngIf="item.trend == 1" name="trending-up-outline" slot="start"></ion-icon>
       <ion-icon *ngIf="item.trend == -1" name="trending-down-outline" slot="start"></ion-icon>
       <ion-icon *ngIf="item.trend == 0" name="ellipsis-horizontal-outline" slot="start"></ion-icon>
-      <ion-label slot="start">{{item.diff.toFixed(4)}}</ion-label>
+      <ion-label slot="start">{{item.diff?.toFixed(4)}}</ion-label>
       <ion-datetime value="{{item.time}}" display-format="HH:mm" readonly="true"></ion-datetime>
     </ion-item>
   </ion-list>
