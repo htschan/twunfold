@@ -10,15 +10,8 @@ import { StatusBar } from '@ionic-native/status-bar/ngx';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { SharedModule } from './shared/shared.module';
-import { APP_CONFIG_DI, APP_CONFIG_VAL } from 'src/twappconfig';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
-
-/*
-export const APP_CONFIG_VAL: IAppConfig = {
-
-};
-*/
 
 @NgModule({
   declarations: [AppComponent],
@@ -35,7 +28,6 @@ export const APP_CONFIG_VAL: IAppConfig = {
   providers: [
     StatusBar,
     SplashScreen,
-    { provide: APP_CONFIG_DI, useValue: APP_CONFIG_VAL },
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],
   bootstrap: [AppComponent]

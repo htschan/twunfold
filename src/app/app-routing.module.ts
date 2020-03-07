@@ -18,6 +18,18 @@ const routes: Routes = [
   {
     path: 'overview',
     loadChildren: () => import('./overview/overview.module').then( m => m.OverviewPageModule)
+  },
+  {
+    path: 'status-inbound',
+    loadChildren: () => import('./status-inbound/status-inbound.module').then( m => m.StatusInboundPageModule)
+  },
+  {
+    path: 'status-outbound',
+    loadChildren: () => import('./status-outbound/status-outbound.module').then( m => m.StatusOutboundPageModule)
+  },
+  {
+    path: 'send-money',
+    loadChildren: () => import('./send-money/send-money.module').then( m => m.SendMoneyPageModule)
   }
 ];
 

@@ -26,6 +26,21 @@ export class AppComponent implements OnInit {
       icon: 'calculator'
     },
     {
+      title: 'Status In',
+      url: 'status-inbound',
+      icon: 'calculator'
+    },
+    {
+      title: 'Status Out',
+      url: 'status-outbound',
+      icon: 'calculator'
+    },
+    {
+      title: 'Send Money',
+      url: 'send-money',
+      icon: 'calculator'
+    },
+    {
       title: 'Chat',
       url: '/folder/Inbox',
       icon: 'chatbubbles'
