@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { TwclientService, DtoTransferStatus } from '../services/twclient.service';
 
 @Component({
   selector: 'app-status-inbound',
@@ -7,9 +8,27 @@ import { Component, OnInit } from '@angular/core';
 })
 export class StatusInboundPage implements OnInit {
 
-  constructor() { }
+  states1: DtoTransferStatus[];
+  states2: DtoTransferStatus[];
+
+  constructor(public twClient: TwclientService) { }
 
   ngOnInit() {
+  }
+
+  ionViewDidEnter() {
+    this.getTransferStatus(null);
+  }
+
+  async getTransferStatus(event) {
+    this.twClient.getTransferStatus1('incoming_payment_waiting').subscribe((data: DtoTransferStatus[]) => {
+      this.states1 = data;
+      if (event != null) { event.target.complete(); }
+    });
+    this.twClient.getTransferStatus2('incoming_payment_waiting').subscribe((data: DtoTransferStatus[]) => {
+      this.states2 = data;
+      if (event != null) { event.target.complete(); }
+    });
   }
 
 }

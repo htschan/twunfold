@@ -23,7 +23,7 @@ export class RatesPage implements OnInit {
   }
 
   async getRate(event) {
-    this.twClient.getRate('CHF', 'THB').then(data => {
+    this.twClient.getRate('CHF', 'THB').subscribe(data => {
       if (this.rates.length > 0 && this.rates[0].rate === data.rate) {
         this.rates[0].time = data.time;
       } else {

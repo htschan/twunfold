@@ -104,14 +104,14 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
     if (!(typeof srcCry === 'string') || srcCry.length !== 3) {
         // Throwing an HttpsError so that the client gets the error details.
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one arguments "sourceCurrency" containing the source currency.');
+            'one argument "sourceCurrency" containing the source currency.');
     }
     const tgtCry = data.targetCurrency;
     // Checking attribute.
     if (!(typeof tgtCry === 'string') || tgtCry.length !== 3) {
         // Throwing an HttpsError so that the client gets the error details.
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one arguments "targetCurrency" containing the target currency.');
+            'one argument "targetCurrency" containing the target currency.');
     }
     // Checking that the user is authenticated.
     if (!context.auth) {
@@ -136,14 +136,15 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
         });
 });
 
-// Get the exchange rate for CHF <-> THB
-exports.getBalance = functions.https.onCall((data: any, context: any) => {
+// Get the profile for the given account
+// account is the name of an account in the firebase configuration
+exports.getProfile = functions.https.onCall((data: any, context: any) => {
     const acct = data.account;
     // Checking attribute.
     if (!(typeof acct === 'string') || acct.length !== 3) {
         // Throwing an HttpsError so that the client gets the error details.
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one arguments "account" containing the account shortcut.');
+            'one argument "account" containing the account shortcut.');
     }
     // Checking that the user is authenticated.
     if (!context.auth) {
@@ -157,10 +158,7 @@ exports.getBalance = functions.https.onCall((data: any, context: any) => {
     return axios.get(`${exports.getUrl(acct)}/v1/profiles`)
         .then(function (response: any) {
             // handle success
-            return response.data[0].id;
-        })
-        .then(function (id: any) {
-            return axios.get(`${exports.getUrl(acct)}/v1/borderless-accounts?profileId=${id}`);
+            return response;
         })
         .catch(function (error: any) {
             // handle error
@@ -169,5 +167,87 @@ exports.getBalance = functions.https.onCall((data: any, context: any) => {
         })
         .then(function (result: any) {
             return result.data[0];
+        });
+});
+
+
+// Get the balance for the given account
+// account is the name of an account in the firebase configuration
+exports.getBalance = functions.https.onCall((data: any, context: any) => {
+    const acct = data.account;
+    // Checking attribute.
+    if (!(typeof acct === 'string') || acct.length !== 3) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one argument "account" containing the account shortcut.');
+    }
+    const profileId = data.profileId;
+    // Checking attribute.
+    if (!(typeof profileId === 'number')) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one argument "profileId" containing the profile id.');
+    }
+    // Checking that the user is authenticated.
+    if (!context.auth) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+            'while authenticated.');
+    }
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+
+    return axios.get(`${exports.getUrl(acct)}/v1/borderless-accounts?profileId=${profileId}`)
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data[0];
+        });
+});
+
+// Get the given status of the given account
+// account is the name of an account in the firebase configuration
+// status is one of 'cancelled', 'incoming_payment_waiting', 'processing', 'funds_converted', 'outgoing_payment_sent' and others
+exports.getTransferStatus = functions.https.onCall((data: any, context: any) => {
+    const acct = data.account;
+    // Checking attribute.
+    if (!(typeof acct === 'string') || acct.length !== 3) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one argument "account" containing the account shortcut.');
+    }
+    const requested_status = data.requested_status;
+    if (!(typeof requested_status === 'string') || requested_status.length < 3) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one argument "requested_status" containing the requested status.');
+    }
+    const profileId = data.profileId;
+    // Checking attribute.
+    if (!(typeof profileId === 'number')) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
+            'one argument "profileId" containing the profile id.');
+    }
+    // Checking that the user is authenticated.
+    if (!context.auth) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+            'while authenticated.');
+    }
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+
+    return axios.get(`${exports.getUrl(acct)}/v1/transfers/?offset=0&limit=100&profile=${profileId}&status=${requested_status}`)
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data;
         });
 });

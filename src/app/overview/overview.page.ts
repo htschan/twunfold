@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TwclientService, DtoRate } from '../services/twclient.service';
+import { TwclientService, DtoRate, DtoBalances, DtoBalance } from '../services/twclient.service';
 import { FormBuilder } from '@angular/forms';
 
 @Component({
@@ -9,8 +9,9 @@ import { FormBuilder } from '@angular/forms';
 })
 export class OverviewPage implements OnInit {
 
-  balTw1C1: any;
-  balTw1C2: any;
+  balTw1C1: DtoBalance;
+  balTw1C2: DtoBalance;
+  balTw2C1: DtoBalance;
   rate: DtoRate;
 
   constructor(public twClient: TwclientService, private fb: FormBuilder) { }
@@ -24,19 +25,21 @@ export class OverviewPage implements OnInit {
   }
 
   async getBalance(event) {
-    this.twClient.getBalance('tw1').then(data => {
+    this.twClient.getBalance1().subscribe((data: DtoBalances) => {
       this.balTw1C1 = data.balances[0];
       this.balTw1C2 = data.balances[1];
       if (event != null) { event.target.complete(); }
     });
-
-  }
-
-  async getRate(event) {
-    this.twClient.getRate('CHF', 'THB').then(data => {
-      this.rate = data;
+    this.twClient.getBalance2().subscribe((data: DtoBalances) => {
+      this.balTw2C1 = data.balances[0];
       if (event != null) { event.target.complete(); }
     });
   }
 
+  async getRate(event) {
+    this.twClient.getRate('CHF', 'THB').subscribe(data => {
+      this.rate = data;
+      if (event != null) { event.target.complete(); }
+    });
+  }
 }

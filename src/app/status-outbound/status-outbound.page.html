@@ -3,10 +3,21 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>Status Outbound</ion-title>
+    <ion-title>Status Auszahlung</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-
+  <ion-refresher slot="fixed" (ionRefresh)="getTransferStatus($event)">
+    <ion-refresher-content pullingIcon="arrow-dropdown" pullingText="Pull to refresh" refreshingSpinner="circles"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <ion-list>
+    <ion-item *ngFor="let item of states">
+      <ion-label slot="start">{{item?.targetCurrency}}</ion-label>
+      <ion-label slot="start">{{item?.targetValue?.toFixed(2)}}</ion-label>
+      <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
+    </ion-item>
+  </ion-list>
 </ion-content>
