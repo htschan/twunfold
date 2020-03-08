@@ -18,7 +18,7 @@ export class AppComponent implements OnInit {
     {
       title: 'Overview',
       url: 'overview',
-      icon: 'calculator'
+      icon: 'home'
     },
     {
       title: 'Rates',
@@ -26,29 +26,24 @@ export class AppComponent implements OnInit {
       icon: 'calculator'
     },
     {
-      title: 'Status In',
+      title: 'Einzahlung',
       url: 'status-inbound',
-      icon: 'calculator'
+      icon: 'add-circle'
     },
     {
-      title: 'Status Out',
+      title: 'Auszahlung',
       url: 'status-outbound',
-      icon: 'calculator'
+      icon: 'remove-circle'
     },
     {
-      title: 'Send Money',
+      title: 'Geld senden',
       url: 'send-money',
-      icon: 'calculator'
+      icon: 'paper-plane'
     },
     {
       title: 'Chat',
       url: '/folder/Inbox',
       icon: 'chatbubbles'
-    },
-    {
-      title: 'Outbox',
-      url: '/folder/Outbox',
-      icon: 'paper-plane'
     }
   ];
   public labels = ['Family', 'Friends', 'Notes', 'Work'];
