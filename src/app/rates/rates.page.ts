@@ -23,28 +23,10 @@ export class RatesPage implements OnInit {
   }
 
   async getRate(event) {
-    this.twClient.getRate('CHF', 'THB').subscribe(data => {
-      if (this.rates.length > 0 && this.rates[0].rate === data.rate) {
-        this.rates[0].time = data.time;
-      } else {
-        if (this.rates.length > 8) {
-          this.rates.pop();
-        }
-        this.rates.push(data);
-        this.rates.sort((a, b) => (a.time > b.time) ? -1 : 1);
-      }
-      if (this.rates.length > 1) {
-        if (this.rates[0].rate > this.rates[1].rate) {
-          this.rates[0].trend = 1;
-        } else if (this.rates[0].rate < this.rates[1].rate) {
-          this.rates[0].trend = -1;
-        } else {
-          this.rates[0].trend = 0;
-        }
-        this.rates[0].diff = Number(this.rates[0].rate) - Number(this.rates[1].rate);
-      }
-      if (event != null) { event.target.complete(); }
+    this.twClient.getRate().subscribe((data: DtoRate[]) => {
+      this.rates = data;
     });
+    if (event != null) { event.target.complete(); }
   }
 
   createForm() {

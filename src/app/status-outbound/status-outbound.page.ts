@@ -7,19 +7,24 @@ import { TwclientService, DtoTransferStatus } from '../services/twclient.service
   styleUrls: ['./status-outbound.page.scss'],
 })
 export class StatusOutboundPage implements OnInit {
-  states: DtoTransferStatus[];
+  states1: DtoTransferStatus[];
+  states2: DtoTransferStatus[];
 
   constructor(public twClient: TwclientService) { }
 
-  ngOnInit() {
-  }
+  ngOnInit() { }
+
   ionViewDidEnter() {
     this.getTransferStatus(null);
   }
 
   async getTransferStatus(event) {
     this.twClient.getTransferStatus1('processing').subscribe((data: DtoTransferStatus[]) => {
-      this.states = data;
+      this.states1 = data;
+      if (event != null) { event.target.complete(); }
+    });
+    this.twClient.getTransferStatus2('processing').subscribe((data: DtoTransferStatus[]) => {
+      this.states2 = data;
       if (event != null) { event.target.complete(); }
     });
   }

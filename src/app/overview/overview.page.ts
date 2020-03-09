@@ -37,9 +37,9 @@ export class OverviewPage implements OnInit {
   }
 
   async getRate(event) {
-    this.twClient.getRate('CHF', 'THB').subscribe(data => {
-      this.rate = data;
-      if (event != null) { event.target.complete(); }
+    this.twClient.getRate().subscribe((data: DtoRate[]) => {
+      this.rate = data[0];
     });
+    if (event != null) { event.target.complete(); }
   }
 }

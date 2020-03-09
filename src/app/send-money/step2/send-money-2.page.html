@@ -1,0 +1,23 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/send-money"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Geld senden</ion-title>
+  </ion-toolbar>
+ </ion-header>
+<ion-content>
+  <ion-card [routerLink]="['step3',target,'la']">
+    <img height="80" src="../../../assets/la.png" />
+    <ion-card-header>
+      La-Iad
+    </ion-card-header>
+  </ion-card>
+  <ion-card [routerLink]="['step3',target,'ha']">
+    <img height="80" src="../../../assets/ha.png" />
+    <ion-card-header>
+      Hans
+    </ion-card-header>
+  </ion-card>
+  <ion-label>{{target}}</ion-label>
+</ion-content>

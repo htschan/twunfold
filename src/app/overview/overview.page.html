@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
-    <ion-title>Overview</ion-title>
+    <ion-title>Home</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -19,7 +19,7 @@
   <p>Saldo</p>
   <ion-card>
     <ion-card-header>
-      <ion-card-title>Hans {{balTw1C2?.currency}}&nbsp;{{balTw1C2?.amount?.value}}</ion-card-title>
+      <ion-card-title>Hans {{balTw1C1?.currency}}&nbsp;<b>{{balTw1C1?.amount?.value.toFixed(2)}}</b></ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <p>
@@ -29,7 +29,7 @@
   </ion-card>
   <ion-card>
     <ion-card-header>
-      <ion-card-title>Hans {{balTw1C1?.currency}}&nbsp;{{balTw1C1?.amount?.value}}</ion-card-title>
+      <ion-card-title>La-Iad {{balTw2C1?.currency}}&nbsp;<b>{{balTw2C1?.amount?.value.toFixed(2)}}</b></ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <p>
@@ -39,17 +39,7 @@
   </ion-card>
   <ion-card>
     <ion-card-header>
-      <ion-card-title>La-Iad {{balTw2C1?.currency}}&nbsp;{{balTw2C1?.amount?.value}}</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <p>
-        
-      </p>
-    </ion-card-content>
-  </ion-card>
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>1 CHF = THB {{rate?.rate?.toFixed(4)}} </ion-card-title>
+      <ion-card-title>1 CHF = THB <b>{{rate?.rate?.toFixed(4)}}</b> </ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <p>

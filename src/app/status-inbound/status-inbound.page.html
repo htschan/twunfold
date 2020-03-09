@@ -21,6 +21,7 @@
       <ion-label>{{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}</ion-label>
       <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
     </ion-item>
+    <ion-item *ngIf='states1?.length === 0'><i>Keine Einzahlung</i></ion-item>
   </ion-list>
   <ion-label>
     La-Iad
@@ -30,5 +31,6 @@
       <ion-label>{{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}</ion-label>
       <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
     </ion-item>
+    <ion-item *ngIf='states2?.length === 0'><i>Keine Einzahlung</i></ion-item>
   </ion-list>
 </ion-content>

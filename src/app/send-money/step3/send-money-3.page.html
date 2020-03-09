@@ -1,0 +1,17 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/send-money"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Betrag</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label>Betrag</ion-label>
+    <ion-input clear-input placeholder="1000"></ion-input>
+  </ion-item>
+  <ion-label>{{source}}</ion-label>
+  <ion-label>{{target}}</ion-label>
+</ion-content>
