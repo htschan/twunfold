@@ -1,8 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-
-import { IonicModule } from '@ionic/angular';
+import { SharedModule } from '../shared/shared.module';
 
 import { SendMoneyPageRoutingModule } from './send-money-routing.module';
 
@@ -12,11 +9,9 @@ import { SendMoney3Page } from './step3/send-money-3.page';
 
 @NgModule({
   imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
+    SharedModule,
     SendMoneyPageRoutingModule
   ],
   declarations: [SendMoneyPage, SendMoney2Page, SendMoney3Page]
 })
-export class SendMoneyPageModule {}
+export class SendMoneyPageModule { }

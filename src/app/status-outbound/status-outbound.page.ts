@@ -19,11 +19,11 @@ export class StatusOutboundPage implements OnInit {
   }
 
   async getTransferStatus(event) {
-    this.twClient.getTransferStatus1('processing').subscribe((data: DtoTransferStatus[]) => {
+    this.twClient.getTransferStatus('processing', 'tw1').subscribe((data: DtoTransferStatus[]) => {
       this.states1 = data;
       if (event != null) { event.target.complete(); }
     });
-    this.twClient.getTransferStatus2('processing').subscribe((data: DtoTransferStatus[]) => {
+    this.twClient.getTransferStatus('processing', 'tw2').subscribe((data: DtoTransferStatus[]) => {
       this.states2 = data;
       if (event != null) { event.target.complete(); }
     });

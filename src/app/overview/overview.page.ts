@@ -25,12 +25,12 @@ export class OverviewPage implements OnInit {
   }
 
   async getBalance(event) {
-    this.twClient.getBalance1().subscribe((data: DtoBalances) => {
+    this.twClient.getBalance('tw1').subscribe((data: DtoBalances) => {
       this.balTw1C1 = data.balances[0];
       this.balTw1C2 = data.balances[1];
       if (event != null) { event.target.complete(); }
     });
-    this.twClient.getBalance2().subscribe((data: DtoBalances) => {
+    this.twClient.getBalance('tw2').subscribe((data: DtoBalances) => {
       this.balTw2C1 = data.balances[0];
       if (event != null) { event.target.complete(); }
     });

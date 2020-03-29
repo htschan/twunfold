@@ -19,11 +19,21 @@ Install Firebase tools
 
 [Adding Firebase Authentication to PWA with Ionic 4, Angular and AngularFire](https://medium.com/@AnkitMaheshwariIn/adding-firebase-authentication-to-pwa-with-ionic-4-angular-and-angularfire-e7cb1caf953)
 
+# Config settings Cloud Functions
+
+Sample setting:
+
+`firebase functions:config:set tw2.prod.ro_token="Bearer 3a762b06-ae42-7a0b-bf42-9da195af4ac9"`
+
+View current settings:
+
+`firebase functions:config:get`
+
 # Debug locally
 
 `cd function`
 
-`sudo nom install`
+`sudo npm install`
 
 `npm run build`
 

@@ -7,11 +7,80 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-item>
-    <ion-label>Betrag</ion-label>
-    <ion-input clear-input placeholder="1000"></ion-input>
-  </ion-item>
+<ion-content padding>
+  <form [formGroup]="itemForm" (ngSubmit)="getQuote()" novalidate>
+    <ion-item>
+      <ion-label>Max. Betrag CHF: {{balance?.amount?.value.toFixed(2)}}</ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>Betrag</ion-label>
+      <ion-input type="number" placeholder="1000" formControlName="amount"></ion-input>
+    </ion-item>
+    <ion-card>
+      <button type="submit" [disabled]="!itemForm.valid">
+        Quote/ข้อเสนอซื้อ
+      </button>
+    </ion-card>
+  </form>
+  <ng-container *ngIf="asyncQuote$ | async as data; else loadingOrError">
+    <form [formGroup]="sendForm" (ngSubmit)="send(data.profile, data.id)" novalidate>
+      <ion-list-header>Quote/ข้อเสนอซื้อ</ion-list-header>
+      <ion-item>
+        <ion-label>CHF</ion-label>
+        <ion-text color="secondary">
+          <h2>
+            <ion-note slot="end">{{data.sourceAmount}}</ion-note>
+          </h2>
+        </ion-text>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>THB</ion-label>
+        <ion-note slot="end" color="primary">{{data.targetAmount}}</ion-note>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Rate/อัตราแลกเปลี่ยน</ion-label>
+        <ion-note slot="end" color="secondary">{{data.rate}}</ion-note>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Gebühr/ค่าธรรมเนียม</ion-label>
+        <ion-note slot="end" color="tertiary">CHF {{data.fee}}</ion-note>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Bis/วันที่มาถึง</ion-label>
+        <ion-note slot="end" color="tertiary">
+          <ion-datetime value="{{data.deliveryEstimate}}" display-format="DDD DD.MM.YY HH:mm" readonly="true">
+          </ion-datetime>
+        </ion-note>
+      </ion-item>
+
+      <ion-item>
+        <button color="primary" size="large" type="submit" [disabled]="!itemForm.valid">
+          Senden/ส่ง
+        </button>
+      </ion-item>
+    </form>
+
+  </ng-container>
   <ion-label>{{source}}</ion-label>
   <ion-label>{{target}}</ion-label>
+  <!-- <p>{{itemForm | json}}</p> -->
+  <ng-template #loadingOrError>
+    <ng-container *ngIf="errorObject; else loading">
+      <div>
+        <div>
+          {{ errorObject }}
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #loading>
+      <div *ngIf="initPage">
+        Loading ...
+      </div>
+    </ng-template>
+  </ng-template>
 </ion-content>

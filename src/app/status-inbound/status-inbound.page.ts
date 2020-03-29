@@ -21,11 +21,11 @@ export class StatusInboundPage implements OnInit {
   }
 
   async getTransferStatus(event) {
-    this.twClient.getTransferStatus1('incoming_payment_waiting').subscribe((data: DtoTransferStatus[]) => {
+    this.twClient.getTransferStatus('incoming_payment_waiting', 'tw1').subscribe((data: DtoTransferStatus[]) => {
       this.states1 = data;
       if (event != null) { event.target.complete(); }
     });
-    this.twClient.getTransferStatus2('incoming_payment_waiting').subscribe((data: DtoTransferStatus[]) => {
+    this.twClient.getTransferStatus('incoming_payment_waiting', 'tw2').subscribe((data: DtoTransferStatus[]) => {
       this.states2 = data;
       if (event != null) { event.target.complete(); }
     });

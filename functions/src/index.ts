@@ -3,7 +3,41 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const axios = require('axios').default;
+const uuidv1 = require('uuid');
 admin.initializeApp();
+
+exports.throwNotAuthenticated = function (context: any) {
+    // Checking that the user is authenticated.
+    if (!context.auth) {
+        // Throwing an HttpsError so that the client gets the error details.
+        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+            'while authenticated.');
+    }
+}
+
+exports.getStringArg = function (inpstring: string, minlen: number, maxlen: number, argname: string, msg: string, origin: string): string {
+    console.log(`${origin} ${argname}=${inpstring}`);
+    // checking attribute.
+    if (!(typeof inpstring === "string") || inpstring.length < minlen || inpstring.length > maxlen) {
+        // throwing an HttpsError so that the client gets the error details.
+        throw new Error("invalid-argument: The function must be called with " +
+            "one string argument [" + argname + "] containing the [" + msg + "].");
+    }
+    console.log(`function ${origin} called with arg ${argname}=${inpstring}`);
+    return inpstring;
+};
+
+exports.getIntArg = function (inpnumber: number, min: number, max: number, argname: string, msg: string, origin: string): number {
+    console.log(`${origin} ${argname}=${inpnumber}`);
+    // checking attribute.
+    if (isNaN(inpnumber)) {
+        // throwing an HttpsError so that the client gets the error details.
+        throw new Error("invalid-argument The function must be called with " +
+            "one integer argument " + argname + " containing the [" + msg + "].");
+    }
+    console.log(`function ${origin} called with arg ${argname}=${inpnumber}`);
+    return inpnumber;
+};
 
 exports.getAuthorization = function (acct: string) {
     const mode = functions.config().global.mode;
@@ -20,6 +54,21 @@ exports.getAuthorization = function (acct: string) {
     }
 }
 
+exports.getAuthorizationRw = function (acct: string) {
+    const mode = functions.config().global.mode;
+    if (mode === "prod") {
+        if (acct === "tw1")
+            return functions.config().tw1.prod.rw_token;
+        else if (acct === "tw2")
+            return functions.config().tw2.prod.rw_token;
+    } else {
+        if (acct === "tw1")
+            return functions.config().tw1.sandbox.rw_token;
+        else if (acct === "tw2")
+            return functions.config().tw2.sandbox.rw_token;
+    }
+}
+
 exports.getUrl = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
@@ -33,6 +82,26 @@ exports.getUrl = function (acct: string) {
         else if (acct === "tw2")
             return functions.config().tw2.sandbox.url;
     }
+}
+
+exports.getRecipientAccountNo = function (recptAccountShortcut: string) {
+    switch (recptAccountShortcut) {
+        case 'su1':
+            return functions.config().global.recipient_account.su1.number;
+        case 'su2':
+            return functions.config().global.recipient_account.su2.number;
+        case 'ui1':
+            return functions.config().global.recipient_account.ui1.number;
+        case 'ui2':
+            return functions.config().global.recipient_account.ui2.number;
+        case 'da1':
+            return functions.config().global.recipient_account.da1.number;
+        case 'da2':
+            return functions.config().global.recipient_account.da2.number;
+        case 'ko1':
+            return functions.config().global.recipient_account.ko1.number;
+    }
+    throw new functions.https.HttpsError('unknown recipient account shortcut', recptAccountShortcut);
 }
 
 // Adds two numbers to each other.
@@ -67,12 +136,7 @@ exports.addMessage = functions.https.onCall((data: any, context: any) => {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
             'one arguments "text" containing the message text to add.');
     }
-    // Checking that the user is authenticated.
-    if (!context.auth) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
-            'while authenticated.');
-    }
+    exports.throwNotAuthenticated(context);
 
     // Authentication / user information is automatically added to the request.
     const uid = context.auth.uid;
@@ -98,27 +162,10 @@ exports.addMessage = functions.https.onCall((data: any, context: any) => {
 
 // Get the exchange rate for CHF <-> THB
 exports.getRate = functions.https.onCall((data: any, context: any) => {
-    // Message text passed from the client.
-    const srcCry = data.sourceCurrency;
-    // Checking attribute.
-    if (!(typeof srcCry === 'string') || srcCry.length !== 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "sourceCurrency" containing the source currency.');
-    }
-    const tgtCry = data.targetCurrency;
-    // Checking attribute.
-    if (!(typeof tgtCry === 'string') || tgtCry.length !== 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "targetCurrency" containing the target currency.');
-    }
-    // Checking that the user is authenticated.
-    if (!context.auth) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
-            'while authenticated.');
-    }
+    const srcCry = exports.getStringArg(data.sourceCurrency, 3, 3, "srcCry", "sourceCurrency", "getRate");
+    const tgtCry = exports.getStringArg(data.targetCurrency, 3, 3, "tgtCry", "targetCurrency", "getRate");
+
+    exports.throwNotAuthenticated(context);
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorization('tw1');
 
@@ -139,19 +186,9 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
 // Get the profile for the given account
 // account is the name of an account in the firebase configuration
 exports.getProfile = functions.https.onCall((data: any, context: any) => {
-    const acct = data.account;
-    // Checking attribute.
-    if (!(typeof acct === 'string') || acct.length !== 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "account" containing the account shortcut.');
-    }
-    // Checking that the user is authenticated.
-    if (!context.auth) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
-            'while authenticated.');
-    }
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getProfiles");
+
+    exports.throwNotAuthenticated(context);
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
 
@@ -170,30 +207,44 @@ exports.getProfile = functions.https.onCall((data: any, context: any) => {
         });
 });
 
+// Get the recipient account id with the given account number shortcut
+// account is the number of the recipients bank account
+exports.getReceipientId = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getReceipientId");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getReceipientId");
+    const recpAcctShortcut = exports.getStringArg(data.recpAcctShortcut, 2, 3, "recpAcctShortcut", "recipient account shortcut", "getReceipientId");
+
+    exports.throwNotAuthenticated(context);
+
+    const recpAcctNo = exports.getRecipientAccountNo(recpAcctShortcut);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+
+    return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
+        .then(function (response: any) {
+            // handle success
+            return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            const accountId = result.data.find((e: any) => e.details.accountNumber === recpAcctNo);
+            if (accountId === undefined)
+                throw new functions.https.HttpsError(`accountNumber [${recpAcctNo}] not found`);
+            return accountId;
+        });
+});
 
 // Get the balance for the given account
 // account is the name of an account in the firebase configuration
 exports.getBalance = functions.https.onCall((data: any, context: any) => {
-    const acct = data.account;
-    // Checking attribute.
-    if (!(typeof acct === 'string') || acct.length !== 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "account" containing the account shortcut.');
-    }
-    const profileId = data.profileId;
-    // Checking attribute.
-    if (!(typeof profileId === 'number')) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "profileId" containing the profile id.');
-    }
-    // Checking that the user is authenticated.
-    if (!context.auth) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
-            'while authenticated.');
-    }
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getBalance");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getBalance");
+
+    exports.throwNotAuthenticated(context);
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
 
@@ -212,32 +263,11 @@ exports.getBalance = functions.https.onCall((data: any, context: any) => {
 // account is the name of an account in the firebase configuration
 // status is one of 'cancelled', 'incoming_payment_waiting', 'processing', 'funds_converted', 'outgoing_payment_sent' and others
 exports.getTransferStatus = functions.https.onCall((data: any, context: any) => {
-    const acct = data.account;
-    // Checking attribute.
-    if (!(typeof acct === 'string') || acct.length !== 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "account" containing the account shortcut.');
-    }
-    const requested_status = data.requested_status;
-    if (!(typeof requested_status === 'string') || requested_status.length < 3) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "requested_status" containing the requested status.');
-    }
-    const profileId = data.profileId;
-    // Checking attribute.
-    if (!(typeof profileId === 'number')) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with ' +
-            'one argument "profileId" containing the profile id.');
-    }
-    // Checking that the user is authenticated.
-    if (!context.auth) {
-        // Throwing an HttpsError so that the client gets the error details.
-        throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
-            'while authenticated.');
-    }
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getTransferStatus");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getTransferStatus");
+    const requested_status = exports.getStringArg(data.requested_status, 3, 60, "requested_status", "requested status", "getTransferStatus");
+
+    exports.throwNotAuthenticated(context);
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
 
@@ -248,6 +278,142 @@ exports.getTransferStatus = functions.https.onCall((data: any, context: any) => 
             throw new functions.https.HttpsError('unknown', error.message, error);
         })
         .then(function (result: any) {
+            return result.data;
+        });
+});
+
+// Get a quote for the given amount
+// account is the name of an account in the firebase configuration
+exports.getQuote = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getQuote");
+    const amount = exports.getIntArg(data.amount, 1, 9999, "amount", "amount", "getQuote");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getQuote");
+
+    exports.throwNotAuthenticated(context);
+    console.log(`post getQuote: amount=${amount} profile=${profileId}`);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    axios.defaults.headers.post['Content-Type'] = 'application/json';
+
+    return axios.post(`${exports.getUrl(acct)}/v1/quotes`, {
+        profile: profileId,
+        source: 'CHF',
+        target: 'THB',
+        rateType: 'FIXED',
+        sourceAmount: amount,
+        type: 'BALANCE_PAYOUT'
+    })
+        .catch(function (error: any) {
+            // handle error
+            console.log(`post getQuote error: ${error.message}`);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            console.log(`post getQuote success: ${JSON.stringify(result.data)}`);
+            return result.data;
+        });
+});
+
+// get requirements for the given quote and recipient account shortcut
+// targetAccount is the name of an account in the firebase configuration
+exports.postRequirements = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "postRequirements");
+    const transactionId = exports.getStringArg(data.transactionId, 36, 36, "transactionId", "transaction id", "postRequirements");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "postRequirements");
+    const recpAcctShortcut = exports.getStringArg(data.recpAcctShortcut, 2, 3, "recpAcctShortcut",
+        "recipient account shortcut", "postRequirements");
+    const referenceText = exports.getStringArg(data.referenceText, 0, 35, "referenceText", "reference text", "postRequirements");
+    const quoteId = exports.getIntArg(data.quoteId, 1, Number.MAX_SAFE_INTEGER, "quoteId", "quote Id", "postRequirements");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.default.defaults.headers.common.Authorization = exports.getAuthorizationRw(acct);
+
+    return exports.getReceipientId({ account: acct, profileId: profileId, recpAcctShortcut: recpAcctShortcut })
+        .then(function (recipient: any) {
+            axios.default.defaults.headers.common.Authorization = exports.getAuthorizationRw(acct);
+            axios.default.defaults.headers.post["Content-Type"] = "application/json";
+            return axios.default.post(`${exports.getUrl(acct)}/v1/transfer-requirements`, {
+                targetAccount: recipient.id,
+                quote: quoteId,
+                customerTransactionId: transactionId,
+                details: {
+                    reference: referenceText,
+                    transferPurpose: "transfer purpose",
+                    sourceOfFunds: "other"
+                }
+            })
+                .catch(function (error: any) {
+                    // handle error
+                    console.log(`post requrements error: ${error.message}`);
+                    throw new Error(`postRequirements error ${error.message} ${error}`);
+                })
+                .then(function (result: any) {
+                    console.log(`post requirements success: ${JSON.stringify(result.data)}`);
+                    return result.data;
+                });
+        });
+});
+
+// Create a transfer for the given quote and recipient account shortcut
+// targetAccount is the name of an account in the firebase configuration
+exports.createTransfer = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "createTransfer");
+    const transactionId = exports.getStringArg(data.transactionId, 36, 36, "transactionId", "transaction id", "createTransfer");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "createTransfer");
+    const recpAcctShortcut = exports.getStringArg(data.recpAcctShortcut, 2, 3, "recpAcctShortcut", "recipient account shortcut", "createTransfer");
+    const referenceText = exports.getStringArg(data.referenceText, 0, 35, "referenceText", "reference text", "createTransfer");
+    const quoteId = exports.getIntArg(data.quoteId, 1, Number.MAX_SAFE_INTEGER, "quoteId", "quote Id", "createTransfer");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+
+    exports.getReceipientId({ account: acct, profileId: profileId, recpAcctShortcut: recpAcctShortcut })
+        .then(function (recipient: any) {
+            axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+            axios.defaults.headers.post['Content-Type'] = 'application/json';
+            return axios.post(`${exports.getUrl(acct)}/v1/transfers`, {
+                targetAccount: recipient.id,
+                quote: quoteId,
+                customerTransactionId: transactionId,
+                details: {
+                    reference: referenceText,
+                    transferPurpose: "verification.transfers.purpose.send.to.family"
+                }
+            })
+                .catch(function (error: any) {
+                    // handle error
+                    console.log(`post createTransfer error: ${error.message}`);
+                    throw new functions.https.HttpsError('unknown', error.message, error);
+                })
+                .then(function (result: any) {
+                    console.log(`post createTransfer success: ${JSON.stringify(result.data)}`);
+                    return result.data;
+                });
+        })
+});
+
+// post fund for given transaction
+exports.postFund = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "postFund");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "postFund");
+    const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "postFund");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.default.defaults.headers.common.Authorization = exports.getAuthorizationRw(acct);
+
+    return axios.default.post(`${exports.etUrl(acct)}/v3/profiles/${profileId}/transfers/${transferId}/payments`, {
+        type: "BALANCE"
+    })
+        .catch(function (error: any) {
+            // handle error
+            console.log(`post postFund error: ${error.message}`);
+            throw new Error(`postFund error ${error.message} ${error}`);
+        })
+        .then(function (result: any) {
+            console.log(`post postFund success: ${JSON.stringify(result.data)}`);
             return result.data;
         });
 });

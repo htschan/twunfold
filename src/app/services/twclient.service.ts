@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, from } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { Observable, of, from, throwError } from 'rxjs';
+import { map, switchMap, tap, catchError } from 'rxjs/operators';
 import * as firebase from 'firebase';
 import { Cacheable } from 'ngx-cacheable';
 import { Storage } from '@ionic/storage';
-
+import { HttpErrorResponse } from '@angular/common/http';
+import * as uuid from 'uuid';
 
 @Injectable({
   providedIn: 'root'
@@ -16,15 +17,9 @@ export class TwclientService {
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
-  getProfile1(): Observable<DtoProfile> {
+  getProfile(source: string): Observable<DtoProfile> {
     const f = firebase.functions().httpsCallable('getProfile');
-    return from(f({ account: 'tw1' })).pipe(map(result => result.data));
-  }
-
-  @Cacheable({ maxAge: 10 * 1000 })
-  getProfile2(): Observable<DtoProfile> {
-    const f = firebase.functions().httpsCallable('getProfile');
-    return from(f({ account: 'tw2' })).pipe(map(result => result.data));
+    return from(f({ account: source })).pipe(map(result => result.data));
   }
 
   getRate(): Observable<DtoRate[]> {
@@ -69,39 +64,53 @@ export class TwclientService {
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
-  getBalance1(): Observable<DtoBalances> {
+  getBalance(source): Observable<DtoBalances> {
     const f = firebase.functions().httpsCallable('getBalance');
-    return this.getProfile1().pipe(
-      switchMap(profile => from(f({ account: 'tw1', profileId: profile.id }))),
-      map(result => result.data)
+    return this.getProfile(source).pipe(
+      switchMap(profile => from(f({ account: source, profileId: profile.id }))),
+      map(result => result.data),
+      catchError(this.handleError)
     );
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
-  getBalance2(): Observable<DtoBalances> {
-    const f = firebase.functions().httpsCallable('getBalance');
-    return this.getProfile2().pipe(
-      switchMap(profile => from(f({ account: 'tw2', profileId: profile.id }))),
-      map(result => result.data)
-    );
-  }
-
-  @Cacheable({ maxAge: 10 * 1000 })
-  getTransferStatus1(status: string): Observable<DtoTransferStatus[]> {
+  getTransferStatus(status: string, source: string): Observable<DtoTransferStatus[]> {
     const f = firebase.functions().httpsCallable('getTransferStatus');
-    return this.getProfile1().pipe(
-      switchMap(profile => from(f({ account: 'tw1', requested_status: status, profileId: profile.id }))),
-      map(result => result.data)
+    return this.getProfile(source).pipe(
+      switchMap(profile => from(f({ account: source, requested_status: status, profileId: profile.id }))),
+      map(result => result.data),
+      catchError(this.handleError)
     );
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
-  getTransferStatus2(status: string): Observable<DtoTransferStatus[]> {
-    const f = firebase.functions().httpsCallable('getTransferStatus');
-    return this.getProfile2().pipe(
-      switchMap(profile => from(f({ account: 'tw2', requested_status: status, profileId: profile.id }))),
-      map(result => result.data)
+  getQuote(val: number, source: string): Observable<DtoResponseQuote> {
+    const f = firebase.functions().httpsCallable('getQuote');
+    return this.getProfile(source).pipe(
+      switchMap(profile => from(f({ account: source, amount: val, profileId: profile.id }))),
+      map(result => result.data),
+      catchError(this.handleError)
     );
+  }
+
+  sendMoney(source: string, target: string, profile: number, quote: number): Observable<string> {
+    const f = firebase.functions().httpsCallable('createTransfer');
+    const fund = firebase.functions().httpsCallable('postFund');
+    const transactionId = uuid.v1();
+    return from(f({
+      account: source,
+      transactionId,
+      profileId: profile,
+      recpAcctShortcut: target,
+      referenceText: 'to my friend',
+      quoteId: quote
+    })).pipe(
+      //      switchMap(result => from(fund({ account: source, profileId: profile, transferId: result.id }))),
+      map(result => {
+        console.log(result);
+        return result.data;
+      }));
+
   }
 
   addMessage(message) {
@@ -111,31 +120,21 @@ export class TwclientService {
     });
   }
 
-  /**
-   * Handle Http operation that failed.
-   * Let the app continue.
-   * @param operation - name of the operation that failed
-   * @param result - optional value to return as the observable result
-   */
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-
-      // TODO: send the error to remote logging infrastructure
-      console.error(error); // log to console instead
-
-      // TODO: better job of transforming error for user consumption
-      this.log(`${operation} failed: ${error.message}`);
-
-      // Let the app keep running by returning an empty result.
-      return of(result as T);
-    };
+  handleError(error: HttpErrorResponse) {
+    if (error.error instanceof ErrorEvent) {
+      // A client-side or network error occurred. Handle it accordingly.
+      console.error('An error occurred:', error.error.message);
+    } else {
+      // The backend returned an unsuccessful response code.
+      // The response body may contain clues as to what went wrong,
+      console.error(
+        `Backend returned code ${error.status}, ` +
+        `body was: ${error.error}`);
+    }
+    // return an observable with a user-facing error message
+    return throwError(
+      'Something bad happened; please try again later.');
   }
-
-  /** Log a HeroService message with the MessageService */
-  private log(message: string) {
-    //  this.messageService.add(`youtube.service: ${message}`);
-  }
-
 }
 
 export class DtoProfile {
@@ -189,6 +188,9 @@ export class DtoBankDetail {
 }
 
 export class DtoBalance {
+  constructor() {
+    this.amount = { value: 2.0, currency: 'CHF' };
+  }
   balanceType: string;
   currency: string;
   amount: {
@@ -234,4 +236,33 @@ export class DtoTransferStatus {
   targetValue: number;
   targetCurrency: string;
   customerTransactionId: string;
+}
+
+export class DtoRequestQuote {
+  profile: number;
+  source: string; // source currency
+  target: string; // target currency
+  rateType: string; // always 'FIXED'
+  targetAmount: number; // either target amount or source amount is necessary, never both
+  sourceAmount: number;
+  type: string; // BALANCE_PAYOUT funded from borderless accounts
+}
+
+export class DtoResponseQuote {
+  id: number; // the quote id
+  source: string; // source currency
+  target: string; // taret currency
+  sourceAmount: number; // source amount
+  targetAmount: number; // target amount
+  type: string;
+  rate: number;
+  createdTime: Date;
+  createdByUserId: number;
+  profile: number;
+  rateType: string;
+  deliveryEstimate: Date;
+  fee: number;
+  allowedProfileTypes: string[];
+  guaranteedTargetAmount: boolean;
+  ofSourceAmount: boolean;
 }
