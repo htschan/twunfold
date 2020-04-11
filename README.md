@@ -19,6 +19,10 @@ Install Firebase tools
 
 [Adding Firebase Authentication to PWA with Ionic 4, Angular and AngularFire](https://medium.com/@AnkitMaheshwariIn/adding-firebase-authentication-to-pwa-with-ionic-4-angular-and-angularfire-e7cb1caf953)
 
+[Writing functions in Typescript](https://firebase.google.com/docs/functions/typescript)
+
+[Environment configuration](https://firebase.google.com/docs/functions/config-env)
+
 # Config settings Cloud Functions
 
 Sample setting:

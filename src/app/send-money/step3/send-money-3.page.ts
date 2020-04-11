@@ -66,9 +66,12 @@ export class SendMoney3Page implements OnInit {
       buttons: ['Cancel/ยกเลิก',
         {
           text: 'Ja, senden/ตกลง', handler: data => {
-            this.twClient.sendMoney(this.source, this.target, profile, quote).subscribe(d => {
-              console.log(d);
-            });
+            this.twClient.sendMoney(this.source, this.target, profile, quote).subscribe(
+              d => {
+                console.log(d);
+              },
+              err => console.log(err),
+              () => console.log('yay'));
           }
         }]
     });

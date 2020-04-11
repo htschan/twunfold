@@ -4,6 +4,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const axios = require('axios').default;
 const uuidv1 = require('uuid');
+const moment = require('moment');
 admin.initializeApp();
 
 exports.throwNotAuthenticated = function (context: any) {
@@ -14,6 +15,19 @@ exports.throwNotAuthenticated = function (context: any) {
             'while authenticated.');
     }
 }
+
+exports.compareTransferStatusDate = function (a: any, b: any) {
+    const dateA = moment(a.created);
+    const dateB = moment(b.created);
+
+    let comparison = 0;
+    if (dateA > dateB) {
+        comparison = -1;
+    } else if (dateA < dateB) {
+        comparison = 1;
+    }
+    return comparison;
+};
 
 exports.getStringArg = function (inpstring: string, minlen: number, maxlen: number, argname: string, msg: string, origin: string): string {
     console.log(`${origin} ${argname}=${inpstring}`);
@@ -33,6 +47,10 @@ exports.getIntArg = function (inpnumber: number, min: number, max: number, argna
     if (isNaN(inpnumber)) {
         // throwing an HttpsError so that the client gets the error details.
         throw new Error("invalid-argument The function must be called with " +
+            "one integer argument " + argname + " containing the [" + msg + "].");
+    }
+    if (inpnumber < min || inpnumber > max) {
+        throw new Error("invalid-argument Out of range error " +
             "one integer argument " + argname + " containing the [" + msg + "].");
     }
     console.log(`function ${origin} called with arg ${argname}=${inpnumber}`);
@@ -238,6 +256,53 @@ exports.getReceipientId = functions.https.onCall((data: any, context: any) => {
         });
 });
 
+// Get the recipients accounts with the given account number shortcut
+exports.getReceipients = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getReceipients");
+    const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getReceipients");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+
+    return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
+        .then(function (response: any) {
+            // handle success
+            return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data;
+        });
+});
+
+// Get the list of thai banks
+exports.getThaiBanks = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getThaiBanks");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+
+    return axios.default.get(`https://api.transferwise.com/v1/banks?country=TH`)
+        .then(function (response: any) {
+            // handle success
+            return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data;
+        });
+});
+
 // Get the balance for the given account
 // account is the name of an account in the firebase configuration
 exports.getBalance = functions.https.onCall((data: any, context: any) => {
@@ -270,15 +335,57 @@ exports.getTransferStatus = functions.https.onCall((data: any, context: any) => 
     exports.throwNotAuthenticated(context);
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
-
-    return axios.get(`${exports.getUrl(acct)}/v1/transfers/?offset=0&limit=100&profile=${profileId}&status=${requested_status}`)
+    const recentDate = moment(new Date());
+    recentDate.subtract(7, 'days');
+    return axios.get(`${exports.getUrl(acct)}/v1/transfers/?offset=0&limit=30&profile=${profileId}&status=${requested_status}&createdDateStart=${recentDate.format('YYYY-MM-DD')}`)
         .catch(function (error: any) {
             // handle error
             console.log(error);
             throw new functions.https.HttpsError('unknown', error.message, error);
         })
         .then(function (result: any) {
-            return result.data;
+            return result.data.sort(exports.compareTransferStatusDate);
+        })
+        .then(function (sortedResult: any) {
+            // get delivery time for each transfer which is in state 'processing'
+            const promises = sortedResult.map(function (transfer: any) {
+                if (transfer.status === 'processing') {
+                    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+                    return axios.get(`${exports.getUrl(acct)}/v1/delivery-estimates/${transfer.id}`)
+                        .catch(function (error: any) {
+                            // handle error
+                            console.log(error);
+                            throw new functions.https.HttpsError('unknown', error.message, error);
+                        })
+                        .then(function (result: any) {
+                            transfer.estimatedDeliveryDate = result.data.estimatedDeliveryDate;
+                            return transfer;
+                        });
+                } else {
+                    return transfer;
+                }
+            });
+            return Promise.all(promises);
+        });
+});
+
+// Get the live delivery estimate for a transfer by the transfer ID
+// account is the name of an account in the firebase configuration
+exports.getDeliveryTime = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getDeliveryTime");
+    const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "getDeliveryTime");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+    return axios.get(`${exports.getUrl(acct)}/v1/delivery-estimates/${transferId}`)
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            return result.data.estimatedDeliveryDate;
         });
 });
 
@@ -369,12 +476,24 @@ exports.createTransfer = functions.https.onCall((data: any, context: any) => {
 
     axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
 
-    exports.getReceipientId({ account: acct, profileId: profileId, recpAcctShortcut: recpAcctShortcut })
-        .then(function (recipient: any) {
+    return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
+        .then(function (response: any) {
+            // handle success
+            return response;
+        })
+        .catch(function (error: any) {
+            // handle error
+            console.log(error);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            const accountId = result.data.find((e: any) => e.details.accountNumber === recpAcctShortcut);
+            if (accountId === undefined)
+                throw new functions.https.HttpsError(`accountNumber [${recpAcctShortcut}] not found`);
             axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
             axios.defaults.headers.post['Content-Type'] = 'application/json';
             return axios.post(`${exports.getUrl(acct)}/v1/transfers`, {
-                targetAccount: recipient.id,
+                targetAccount: accountId,
                 quote: quoteId,
                 customerTransactionId: transactionId,
                 details: {
@@ -387,11 +506,11 @@ exports.createTransfer = functions.https.onCall((data: any, context: any) => {
                     console.log(`post createTransfer error: ${error.message}`);
                     throw new functions.https.HttpsError('unknown', error.message, error);
                 })
-                .then(function (result: any) {
-                    console.log(`post createTransfer success: ${JSON.stringify(result.data)}`);
-                    return result.data;
+                .then(function (result1: any) {
+                    console.log(`post createTransfer success: ${JSON.stringify(result1.data)}`);
+                    return result1.data;
                 });
-        })
+        });
 });
 
 // post fund for given transaction
@@ -404,7 +523,7 @@ exports.postFund = functions.https.onCall((data: any, context: any) => {
 
     axios.default.defaults.headers.common.Authorization = exports.getAuthorizationRw(acct);
 
-    return axios.default.post(`${exports.etUrl(acct)}/v3/profiles/${profileId}/transfers/${transferId}/payments`, {
+    return axios.default.post(`${exports.getUrl(acct)}/v3/profiles/${profileId}/transfers/${transferId}/payments`, {
         type: "BALANCE"
     })
         .catch(function (error: any) {
@@ -414,6 +533,27 @@ exports.postFund = functions.https.onCall((data: any, context: any) => {
         })
         .then(function (result: any) {
             console.log(`post postFund success: ${JSON.stringify(result.data)}`);
+            return result.data;
+        });
+});
+
+// cancel the transfer specified by transferId
+exports.cancelTransfer = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "cancelTransfer");
+    const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "cancelTransfer");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.default.defaults.headers.common.Authorization = exports.getAuthorizationRw(acct);
+
+    return axios.default.put(`${exports.getUrl(acct)}/v1/transfers/${transferId}/cancel`)
+        .catch(function (error: any) {
+            // handle error
+            console.log(`put cancelTransfer error: ${error.message}`);
+            throw new Error(`cancelTransfer error ${error.message} ${error}`);
+        })
+        .then(function (result: any) {
+            console.log(`put cancelTransfer success: ${JSON.stringify(result.data)}`);
             return result.data;
         });
 });

@@ -13,25 +13,67 @@
       refreshingText="Refreshing...">
     </ion-refresher-content>
   </ion-refresher>
-  <ion-label>
-    Hans
-  </ion-label>
-  <ion-list>
-    <ion-item *ngFor="let item of states1">
-      <ion-label slot="start">{{item?.targetCurrency}}</ion-label>
-      <ion-label slot="start">{{item?.targetValue?.toFixed(2)}}</ion-label>
-      <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
+  <ion-segment (ionChange)="segmentChanged($event)" color="secondary" [(ngModel)]="select">
+    <ion-segment-button value="Hans" checked>
+      <ion-label>Hans</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="Laiad">
+      <ion-label>La-Iad</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+  <ion-list *ngIf="segment == 'Hans'">
+    <ion-item *ngFor="let item of states1"
+      color="{{item?.status=='outgoing_payment_sent'?'success':item?.status=='processing'?'warning':'danger'}}">
+      <ion-label>
+        <p>
+          {{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}&nbsp;&nbsp;
+          {{item?.sourceCurrency}}&nbsp;{{item?.sourceValue?.toFixed(2)}}&nbsp;&nbsp;{{item?.rate}}
+        </p>
+        <p>
+          <ion-datetime value="{{item?.created}}" display-format="DDD DD.MM HH:mm" readonly="true"></ion-datetime>
+        </p>
+        <p>
+          {{twClient.getAccountHolderName(item?.targetAccount)}}
+        </p>
+        <p>
+          {{twClient.getBankNameByAccountNumber(item?.targetAccount)}}
+        </p>
+        <div *ngIf="item?.status=='processing'">
+          <ion-button color="danger" (click)="cancelTransfer('tw1',item?.id)">Cancel</ion-button>
+        </div>
+      </ion-label>
+      <div *ngIf="item?.estimatedDeliveryDate !== null">
+        <ion-datetime value="{{item?.estimatedDeliveryDate}}" display-format="DDD DD.MM HH:mm" readonly="true">
+        </ion-datetime>
+      </div>
     </ion-item>
     <ion-item *ngIf='states1?.length === 0'><i>Keine Auszahlung</i></ion-item>
   </ion-list>
-  <ion-label>
-    La-Iad
-  </ion-label>
-  <ion-list>
-    <ion-item *ngFor="let item of states2">
-      <ion-label slot="start">{{item?.targetCurrency}}</ion-label>
-      <ion-label slot="start">{{item?.targetValue?.toFixed(2)}}</ion-label>
-      <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
+  <ion-list *ngIf="segment == 'Laiad'">
+    <ion-item *ngFor="let item of states2"
+      color="{{item?.status=='outgoing_payment_sent'?'success':item?.status=='processing'?'warning':'danger'}}">
+      <ion-label>
+        <p>
+          {{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}&nbsp;&nbsp;
+          {{item?.sourceCurrency}}&nbsp;{{item?.sourceValue?.toFixed(2)}}&nbsp;&nbsp;{{item?.rate}}
+        </p>
+        <p>
+          <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
+        </p>
+        <p>
+          <!-- {{twClient.getAccountHolderName(item?.targetAccount)}} -->
+        </p>
+        <p>
+          <!-- {{twClient.getBankNameByAccountNumber(item?.targetAccount)}} -->
+        </p>
+        <div *ngIf="item?.status=='processing'">
+          <ion-button color="danger" (click)="cancelTransfer('tw2',item?.id)">Cancel</ion-button>
+        </div>
+        </ion-label>
+      <div *ngIf="item?.estimatedDeliveryDate !== null">
+        <ion-datetime value="{{item?.estimatedDeliveryDate}}" display-format="DDD DD.MM HH:mm" readonly="true">
+        </ion-datetime>
+      </div>
     </ion-item>
     <ion-item *ngIf='states2?.length === 0'><i>Keine Auszahlung</i></ion-item>
   </ion-list>

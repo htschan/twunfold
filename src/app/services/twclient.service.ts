@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, from, throwError } from 'rxjs';
-import { map, switchMap, tap, catchError } from 'rxjs/operators';
+import { map, switchMap, tap, catchError, take } from 'rxjs/operators';
 import * as firebase from 'firebase';
 import { Cacheable } from 'ngx-cacheable';
 import { Storage } from '@ionic/storage';
@@ -12,8 +12,12 @@ import * as uuid from 'uuid';
 })
 export class TwclientService {
   private rates: DtoRate[] = new Array();
+  private receipients: DtoReceipient[] = new Array();
+  private banks: DtoBank[] = new Array();
 
   constructor(private storage: Storage) {
+    this.getReceipients('tw1');
+    this.getThaiBanks('tw1');
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
@@ -61,6 +65,47 @@ export class TwclientService {
   getRateX(sourceCurrency: string, targetCurrency: string): Observable<DtoRate> {
     const f = firebase.functions().httpsCallable('getRate');
     return from(f({ sourceCurrency, targetCurrency })).pipe(map(result => result.data));
+  }
+
+  getReceipients(source: string): void {
+    const f = firebase.functions().httpsCallable('getReceipients');
+    this.getProfile(source).pipe(take(1)).subscribe((profile: any) => {
+      from(f({ account: source, profileId: profile.id })).pipe(take(1)).subscribe((data: any) => {
+        console.log(data);
+        this.receipients = data.data;
+      });
+    });
+  }
+
+  getThaiBanks(source: string): void {
+    const f = firebase.functions().httpsCallable('getThaiBanks');
+    from(f({ account: source })).pipe(take(1)).subscribe((data: any) => {
+      console.log(data);
+      this.banks = data.data.values;
+    });
+  }
+
+  getAccountHolderName(accountNumber: number): string {
+    const account = this.receipients.find(x => x.id === accountNumber);
+    return account.accountHolderName;
+  }
+
+  getAccountBankCode(accountNumber: number): number {
+    const account = this.receipients.find(x => x.id === accountNumber);
+    return account.details.bankCode;
+  }
+
+  getBankNameByCode(code: number): string {
+    const bank = this.banks.find(x => x.code === code);
+    return bank.title;
+  }
+
+  getBankNameByAccountNumber(accountNumber: number): string {
+    const bankCode = this.getAccountBankCode(accountNumber);
+    if (bankCode == null) {
+      return '???';
+    }
+    return this.getBankNameByCode(bankCode);
   }
 
   @Cacheable({ maxAge: 10 * 1000 })
@@ -113,6 +158,11 @@ export class TwclientService {
 
   }
 
+  cancelTransfer(source: string, transferId: number): Observable<DtoResponseCancelTransfer> {
+    const f = firebase.functions().httpsCallable('cancelTransfer');
+    return from(f({ account: source, transferId })).pipe(map(result => result.data));
+  }
+
   addMessage(message) {
     const addMessage = firebase.functions().httpsCallable('addMessage');
     addMessage({ text: message }).then(result => {
@@ -158,6 +208,22 @@ export class DtoProfile {
     avatar: string;
     primaryAddress: string;
   };
+}
+
+export class DtoReceipient {
+  id: number;
+  profile: number;
+  accountHolderName: string;
+  currency: string;
+  details: {
+    accountNumber: number;
+    bankCode: number;
+  };
+}
+
+export class DtoBank {
+  code: number;
+  title: string;
 }
 
 export class DtoRate {
@@ -236,6 +302,7 @@ export class DtoTransferStatus {
   targetValue: number;
   targetCurrency: string;
   customerTransactionId: string;
+  estimatedDeliveryDate?: string;
 }
 
 export class DtoRequestQuote {
@@ -265,4 +332,12 @@ export class DtoResponseQuote {
   allowedProfileTypes: string[];
   guaranteedTargetAmount: boolean;
   ofSourceAmount: boolean;
+}
+
+export class DtoResponseCancelTransfer {
+  id: number;
+  user: number;
+  targetAccount: number;
+  quote: number;
+  hasActiveIssues: boolean;
 }
