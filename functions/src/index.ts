@@ -1,13 +1,13 @@
 'use strict';
 
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-const axios = require('axios').default;
-const uuidv1 = require('uuid');
-const moment = require('moment');
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import * as axios from 'axios';
+import * as moment from 'moment';
+
 admin.initializeApp();
 
-exports.throwNotAuthenticated = function (context: any) {
+export const throwNotAuthenticated = function (context: any) {
     // Checking that the user is authenticated.
     if (!context.auth) {
         // Throwing an HttpsError so that the client gets the error details.
@@ -16,7 +16,7 @@ exports.throwNotAuthenticated = function (context: any) {
     }
 }
 
-exports.compareTransferStatusDate = function (a: any, b: any) {
+export const compareTransferStatusDate = function (a: any, b: any) {
     const dateA = moment(a.created);
     const dateB = moment(b.created);
 
@@ -29,7 +29,7 @@ exports.compareTransferStatusDate = function (a: any, b: any) {
     return comparison;
 };
 
-exports.getStringArg = function (inpstring: string, minlen: number, maxlen: number, argname: string, msg: string, origin: string): string {
+export const getStringArg = function (inpstring: string, minlen: number, maxlen: number, argname: string, msg: string, origin: string): string {
     console.log(`${origin} ${argname}=${inpstring}`);
     // checking attribute.
     if (!(typeof inpstring === "string") || inpstring.length < minlen || inpstring.length > maxlen) {
@@ -41,7 +41,7 @@ exports.getStringArg = function (inpstring: string, minlen: number, maxlen: numb
     return inpstring;
 };
 
-exports.getIntArg = function (inpnumber: number, min: number, max: number, argname: string, msg: string, origin: string): number {
+export const getIntArg = function (inpnumber: number, min: number, max: number, argname: string, msg: string, origin: string): number {
     console.log(`${origin} ${argname}=${inpnumber}`);
     // checking attribute.
     if (isNaN(inpnumber)) {
@@ -57,7 +57,7 @@ exports.getIntArg = function (inpnumber: number, min: number, max: number, argna
     return inpnumber;
 };
 
-exports.getAuthorization = function (acct: string) {
+export const getAuthorization = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
         if (acct === "tw1")
@@ -72,7 +72,7 @@ exports.getAuthorization = function (acct: string) {
     }
 }
 
-exports.getAuthorizationRw = function (acct: string) {
+export const getAuthorizationRw = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
         if (acct === "tw1")
@@ -87,7 +87,7 @@ exports.getAuthorizationRw = function (acct: string) {
     }
 }
 
-exports.getUrl = function (acct: string) {
+export const getUrl = function (acct: string) {
     const mode = functions.config().global.mode;
     if (mode === "prod") {
         if (acct === "tw1")
@@ -102,7 +102,7 @@ exports.getUrl = function (acct: string) {
     }
 }
 
-exports.getRecipientAccountNo = function (recptAccountShortcut: string) {
+export const getRecipientAccountNo = function (recptAccountShortcut: string) {
     switch (recptAccountShortcut) {
         case 'su1':
             return functions.config().global.recipient_account.su1.number;
@@ -119,11 +119,11 @@ exports.getRecipientAccountNo = function (recptAccountShortcut: string) {
         case 'ko1':
             return functions.config().global.recipient_account.ko1.number;
     }
-    throw new functions.https.HttpsError('unknown recipient account shortcut', recptAccountShortcut);
+    throw new functions.https.HttpsError('unknown', 'unknown recipient account shortcut', recptAccountShortcut);
 }
 
 // Adds two numbers to each other.
-exports.addNumbers = functions.https.onCall((data: any) => {
+export const addNumbers = functions.https.onCall((data: any) => {
     // Numbers passed from the client.
     const firstNumber = data.firstNumber;
     const secondNumber = data.secondNumber;
@@ -145,7 +145,7 @@ exports.addNumbers = functions.https.onCall((data: any) => {
 });
 
 // Saves a message to the Firebase Realtime Database but sanitizes the text by removing swearwords.
-exports.addMessage = functions.https.onCall((data: any, context: any) => {
+export const addMessage = functions.https.onCall((data: any, context: any) => {
     // Message text passed from the client.
     const text = data.text;
     // Checking attribute.
@@ -179,15 +179,15 @@ exports.addMessage = functions.https.onCall((data: any, context: any) => {
 });
 
 // Get the exchange rate for CHF <-> THB
-exports.getRate = functions.https.onCall((data: any, context: any) => {
+export const getRate = functions.https.onCall((data: any, context: any) => {
     const srcCry = exports.getStringArg(data.sourceCurrency, 3, 3, "srcCry", "sourceCurrency", "getRate");
     const tgtCry = exports.getStringArg(data.targetCurrency, 3, 3, "tgtCry", "targetCurrency", "getRate");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization('tw1');
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization('tw1');
 
-    return axios.get(`${exports.getUrl('tw1')}/v1/rates?source=${srcCry}&target=${tgtCry}`)
+    return axios.default.get(`${exports.getUrl('tw1')}/v1/rates?source=${srcCry}&target=${tgtCry}`)
         .then(function (response: any) {
             // handle success
             return response;
@@ -203,14 +203,14 @@ exports.getRate = functions.https.onCall((data: any, context: any) => {
 
 // Get the profile for the given account
 // account is the name of an account in the firebase configuration
-exports.getProfile = functions.https.onCall((data: any, context: any) => {
+export const getProfile = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getProfiles");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
 
-    return axios.get(`${exports.getUrl(acct)}/v1/profiles`)
+    return axios.default.get(`${exports.getUrl(acct)}/v1/profiles`)
         .then(function (response: any) {
             // handle success
             return response;
@@ -227,7 +227,7 @@ exports.getProfile = functions.https.onCall((data: any, context: any) => {
 
 // Get the recipient account id with the given account number shortcut
 // account is the number of the recipients bank account
-exports.getReceipientId = functions.https.onCall((data: any, context: any) => {
+export const getReceipientId = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getReceipientId");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getReceipientId");
     const recpAcctShortcut = exports.getStringArg(data.recpAcctShortcut, 2, 3, "recpAcctShortcut", "recipient account shortcut", "getReceipientId");
@@ -236,7 +236,7 @@ exports.getReceipientId = functions.https.onCall((data: any, context: any) => {
 
     const recpAcctNo = exports.getRecipientAccountNo(recpAcctShortcut);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
 
     return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
         .then(function (response: any) {
@@ -251,19 +251,19 @@ exports.getReceipientId = functions.https.onCall((data: any, context: any) => {
         .then(function (result: any) {
             const accountId = result.data.find((e: any) => e.details.accountNumber === recpAcctNo);
             if (accountId === undefined)
-                throw new functions.https.HttpsError(`accountNumber [${recpAcctNo}] not found`);
+                throw new functions.https.HttpsError('not-found', `accountNumber [${recpAcctNo}] not found`);
             return accountId;
         });
 });
 
 // Get the recipients accounts with the given account number shortcut
-exports.getReceipients = functions.https.onCall((data: any, context: any) => {
+export const getReceipients = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getReceipients");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getReceipients");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
 
     return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
         .then(function (response: any) {
@@ -281,12 +281,12 @@ exports.getReceipients = functions.https.onCall((data: any, context: any) => {
 });
 
 // Get the list of thai banks
-exports.getThaiBanks = functions.https.onCall((data: any, context: any) => {
+export const getThaiBanks = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getThaiBanks");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
 
     return axios.default.get(`https://api.transferwise.com/v1/banks?country=TH`)
         .then(function (response: any) {
@@ -305,15 +305,15 @@ exports.getThaiBanks = functions.https.onCall((data: any, context: any) => {
 
 // Get the balance for the given account
 // account is the name of an account in the firebase configuration
-exports.getBalance = functions.https.onCall((data: any, context: any) => {
+export const getBalance = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getBalance");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getBalance");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
 
-    return axios.get(`${exports.getUrl(acct)}/v1/borderless-accounts?profileId=${profileId}`)
+    return axios.default.get(`${exports.getUrl(acct)}/v1/borderless-accounts?profileId=${profileId}`)
         .catch(function (error: any) {
             // handle error
             console.log(error);
@@ -327,17 +327,17 @@ exports.getBalance = functions.https.onCall((data: any, context: any) => {
 // Get the given status of the given account
 // account is the name of an account in the firebase configuration
 // status is one of 'cancelled', 'incoming_payment_waiting', 'processing', 'funds_converted', 'outgoing_payment_sent' and others
-exports.getTransferStatus = functions.https.onCall((data: any, context: any) => {
+export const getTransferStatus = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getTransferStatus");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getTransferStatus");
     const requested_status = exports.getStringArg(data.requested_status, 3, 60, "requested_status", "requested status", "getTransferStatus");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
     const recentDate = moment(new Date());
     recentDate.subtract(7, 'days');
-    return axios.get(`${exports.getUrl(acct)}/v1/transfers/?offset=0&limit=30&profile=${profileId}&status=${requested_status}&createdDateStart=${recentDate.format('YYYY-MM-DD')}`)
+    return axios.default.get(`${exports.getUrl(acct)}/v1/transfers/?offset=0&limit=30&profile=${profileId}&status=${requested_status}&createdDateStart=${recentDate.format('YYYY-MM-DD')}`)
         .catch(function (error: any) {
             // handle error
             console.log(error);
@@ -350,15 +350,18 @@ exports.getTransferStatus = functions.https.onCall((data: any, context: any) => 
             // get delivery time for each transfer which is in state 'processing'
             const promises = sortedResult.map(function (transfer: any) {
                 if (transfer.status === 'processing') {
-                    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
-                    return axios.get(`${exports.getUrl(acct)}/v1/delivery-estimates/${transfer.id}`)
+                    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+                    return axios.default.get(`${exports.getUrl(acct)}/v1/quotes/${transfer.quote}`)
                         .catch(function (error: any) {
                             // handle error
                             console.log(error);
                             throw new functions.https.HttpsError('unknown', error.message, error);
                         })
                         .then(function (result: any) {
-                            transfer.estimatedDeliveryDate = result.data.estimatedDeliveryDate;
+                            transfer.estimatedDeliveryDate = result.data.deliveryEstimate;
+                            transfer.sourceValue = result.data.sourceAmount;
+                            transfer.targetValue = result.data.targetAmount;
+                            transfer.fee = result.data.fee;
                             return transfer;
                         });
                 } else {
@@ -371,14 +374,14 @@ exports.getTransferStatus = functions.https.onCall((data: any, context: any) => 
 
 // Get the live delivery estimate for a transfer by the transfer ID
 // account is the name of an account in the firebase configuration
-exports.getDeliveryTime = functions.https.onCall((data: any, context: any) => {
+export const getDeliveryTime = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getDeliveryTime");
     const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "getDeliveryTime");
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
-    return axios.get(`${exports.getUrl(acct)}/v1/delivery-estimates/${transferId}`)
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorization(acct);
+    return axios.default.get(`${exports.getUrl(acct)}/v1/delivery-estimates/${transferId}`)
         .catch(function (error: any) {
             // handle error
             console.log(error);
@@ -391,7 +394,7 @@ exports.getDeliveryTime = functions.https.onCall((data: any, context: any) => {
 
 // Get a quote for the given amount
 // account is the name of an account in the firebase configuration
-exports.getQuote = functions.https.onCall((data: any, context: any) => {
+export const getQuote = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "getQuote");
     const amount = exports.getIntArg(data.amount, 1, 9999, "amount", "amount", "getQuote");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "getQuote");
@@ -399,10 +402,10 @@ exports.getQuote = functions.https.onCall((data: any, context: any) => {
     exports.throwNotAuthenticated(context);
     console.log(`post getQuote: amount=${amount} profile=${profileId}`);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
-    axios.defaults.headers.post['Content-Type'] = 'application/json';
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    axios.default.defaults.headers.post['Content-Type'] = 'application/json';
 
-    return axios.post(`${exports.getUrl(acct)}/v1/quotes`, {
+    return axios.default.post(`${exports.getUrl(acct)}/v1/quotes`, {
         profile: profileId,
         source: 'CHF',
         target: 'THB',
@@ -421,9 +424,31 @@ exports.getQuote = functions.https.onCall((data: any, context: any) => {
         });
 });
 
+// Query a quote for the given quoteId
+// account is the name of an account in the firebase configuration
+export const queryQuote = functions.https.onCall((data: any, context: any) => {
+    const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "queryQuote");
+    const quoteId = exports.getStringArg(data.quoteId, 1, 40, "quoteId", "profile Id", "queryQuote");
+
+    exports.throwNotAuthenticated(context);
+
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+
+    return axios.default.get(`${exports.getUrl(acct)}/v1/quotes/${quoteId}`)
+        .catch(function (error: any) {
+            // handle error
+            console.log(`get queryQuote error: ${error.message}`);
+            throw new functions.https.HttpsError('unknown', error.message, error);
+        })
+        .then(function (result: any) {
+            console.log(`get queryQuote success: ${JSON.stringify(result.data)}`);
+            return result.data;
+        });
+});
+
 // get requirements for the given quote and recipient account shortcut
 // targetAccount is the name of an account in the firebase configuration
-exports.postRequirements = functions.https.onCall((data: any, context: any) => {
+export const postRequirements = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "postRequirements");
     const transactionId = exports.getStringArg(data.transactionId, 36, 36, "transactionId", "transaction id", "postRequirements");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "postRequirements");
@@ -464,7 +489,7 @@ exports.postRequirements = functions.https.onCall((data: any, context: any) => {
 
 // Create a transfer for the given quote and recipient account shortcut
 // targetAccount is the name of an account in the firebase configuration
-exports.createTransfer = functions.https.onCall((data: any, context: any) => {
+export const createTransfer = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "createTransfer");
     const transactionId = exports.getStringArg(data.transactionId, 36, 36, "transactionId", "transaction id", "createTransfer");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "createTransfer");
@@ -474,7 +499,9 @@ exports.createTransfer = functions.https.onCall((data: any, context: any) => {
 
     exports.throwNotAuthenticated(context);
 
-    axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+    const recpAcctNo = exports.getRecipientAccountNo(recpAcctShortcut);
+
+    axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
 
     return axios.default.get(`${exports.getUrl(acct)}/v1/accounts?profile=${profileId}`)
         .then(function (response: any) {
@@ -487,13 +514,13 @@ exports.createTransfer = functions.https.onCall((data: any, context: any) => {
             throw new functions.https.HttpsError('unknown', error.message, error);
         })
         .then(function (result: any) {
-            const accountId = result.data.find((e: any) => e.details.accountNumber === recpAcctShortcut);
-            if (accountId === undefined)
-                throw new functions.https.HttpsError(`accountNumber [${recpAcctShortcut}] not found`);
-            axios.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
-            axios.defaults.headers.post['Content-Type'] = 'application/json';
-            return axios.post(`${exports.getUrl(acct)}/v1/transfers`, {
-                targetAccount: accountId,
+            const receipientAccount = result.data.find((e: any) => e.details.accountNumber === recpAcctNo);
+            if (receipientAccount === undefined)
+                throw new functions.https.HttpsError('not-found', `receipient account [${recpAcctShortcut}] not found`);
+            axios.default.defaults.headers.common['Authorization'] = exports.getAuthorizationRw(acct);
+            axios.default.defaults.headers.post['Content-Type'] = 'application/json';
+            return axios.default.post(`${exports.getUrl(acct)}/v1/transfers`, {
+                targetAccount: receipientAccount.id,
                 quote: quoteId,
                 customerTransactionId: transactionId,
                 details: {
@@ -513,8 +540,8 @@ exports.createTransfer = functions.https.onCall((data: any, context: any) => {
         });
 });
 
-// post fund for given transaction
-exports.postFund = functions.https.onCall((data: any, context: any) => {
+// post fund for given transferId
+export const postFund = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "postFund");
     const profileId = exports.getIntArg(data.profileId, 1, Number.MAX_SAFE_INTEGER, "profileId", "profile Id", "postFund");
     const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "postFund");
@@ -538,7 +565,7 @@ exports.postFund = functions.https.onCall((data: any, context: any) => {
 });
 
 // cancel the transfer specified by transferId
-exports.cancelTransfer = functions.https.onCall((data: any, context: any) => {
+export const cancelTransfer = functions.https.onCall((data: any, context: any) => {
     const acct = exports.getStringArg(data.account, 3, 3, "account", "account shortcut", "cancelTransfer");
     const transferId = exports.getIntArg(data.transferId, 1, Number.MAX_SAFE_INTEGER, "transferId", "transfer Id", "cancelTransfer");
 
