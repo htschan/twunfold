@@ -1,0 +1,46 @@
+<ion-card *ngFor="let item of states">
+  <ion-card-header
+    color="{{item?.status=='outgoing_payment_sent'?'success':item?.status=='processing'?'warning':'danger'}}">
+    <ion-card-title>
+      {{twClient.getAccountHolderName(sourceAccount, item?.targetAccount)}}
+    </ion-card-title>
+    <ion-card-subtitle>
+      {{twClient.getBankNameByAccountNumber(sourceAccount, item?.targetAccount)}}
+    </ion-card-subtitle>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-chip>
+      {{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}
+    </ion-chip>
+    <ion-chip *ngIf="item?.rate > 1">
+      {{item?.sourceCurrency}}&nbsp;{{item?.sourceValue?.toFixed(2)}}
+    </ion-chip>
+    <ion-chip *ngIf="item?.rate > 1">
+      {{item?.rate}}
+    </ion-chip>
+    <ion-chip>
+      <ion-label>
+        Gesendet
+      </ion-label>
+      <ion-datetime value="{{item?.created}}" display-format="DDD DD.MM HH:mm" readonly="true"></ion-datetime>
+    </ion-chip>
+    <ion-grid>
+      <ion-row *ngIf="item?.status=='processing'">
+        <ion-col>
+          <ion-chip lines="none" color="warning">
+            <ion-label>
+              Erwartet
+            </ion-label>
+            <ion-datetime value="{{item?.estimatedDeliveryDate}}" display-format="DDD DD.MM HH:mm" readonly="true">
+            </ion-datetime>
+          </ion-chip>
+        </ion-col>
+        <ion-col>
+          <ion-button size="small" color="danger" (click)="cancelTransfer(item?.id)">
+            <ion-icon name="close-circle-outline"></ion-icon>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-card-content>
+</ion-card>

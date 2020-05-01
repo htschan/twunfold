@@ -3,6 +3,9 @@
     <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
     </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-icon [routerLink]="['/overview']" name="home"></ion-icon>
+    </ion-buttons>
     <ion-title>Status Auszahlung</ion-title>
   </ion-toolbar>
 </ion-header>
@@ -22,59 +25,13 @@
     </ion-segment-button>
   </ion-segment>
   <ion-list *ngIf="segment == 'Hans'">
-    <ion-item *ngFor="let item of states1"
-      color="{{item?.status=='outgoing_payment_sent'?'success':item?.status=='processing'?'warning':'danger'}}">
-      <ion-label>
-        <p>
-          {{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}&nbsp;&nbsp;
-          {{item?.sourceCurrency}}&nbsp;{{item?.sourceValue?.toFixed(2)}}&nbsp;&nbsp;{{item?.rate}}
-        </p>
-        <p>
-          <ion-datetime value="{{item?.created}}" display-format="DDD DD.MM HH:mm" readonly="true"></ion-datetime>
-        </p>
-        <p>
-          {{twClient.getAccountHolderName(item?.targetAccount)}}
-        </p>
-        <p>
-          {{twClient.getBankNameByAccountNumber(item?.targetAccount)}}
-        </p>
-        <div *ngIf="item?.status=='processing'">
-          <ion-button color="danger" (click)="cancelTransfer('tw1',item?.id)">Cancel</ion-button>
-        </div>
-      </ion-label>
-      <div *ngIf="item?.estimatedDeliveryDate !== null">
-        <ion-datetime value="{{item?.estimatedDeliveryDate}}" display-format="DDD DD.MM HH:mm" readonly="true">
-        </ion-datetime>
-      </div>
-    </ion-item>
-    <ion-item *ngIf='states1?.length === 0'><i>Keine Auszahlung</i></ion-item>
+    <app-transfer-status [states]="states1" sourceAccount="tw1" (cancelled)="cancelTransfer('tw1',$event)">
+    </app-transfer-status>
+    <ion-item *ngIf='states1?.length === 0'><i>Keine Auszahlung in letzter Woche</i></ion-item>
   </ion-list>
   <ion-list *ngIf="segment == 'Laiad'">
-    <ion-item *ngFor="let item of states2"
-      color="{{item?.status=='outgoing_payment_sent'?'success':item?.status=='processing'?'warning':'danger'}}">
-      <ion-label>
-        <p>
-          {{item?.targetCurrency}}&nbsp;{{item?.targetValue?.toFixed(2)}}&nbsp;&nbsp;
-          {{item?.sourceCurrency}}&nbsp;{{item?.sourceValue?.toFixed(2)}}&nbsp;&nbsp;{{item?.rate}}
-        </p>
-        <p>
-          <ion-datetime value="{{item?.created}}" display-format="DD.MM HH:mm" readonly="true"></ion-datetime>
-        </p>
-        <p>
-          <!-- {{twClient.getAccountHolderName(item?.targetAccount)}} -->
-        </p>
-        <p>
-          <!-- {{twClient.getBankNameByAccountNumber(item?.targetAccount)}} -->
-        </p>
-        <div *ngIf="item?.status=='processing'">
-          <ion-button color="danger" (click)="cancelTransfer('tw2',item?.id)">Cancel</ion-button>
-        </div>
-        </ion-label>
-      <div *ngIf="item?.estimatedDeliveryDate !== null">
-        <ion-datetime value="{{item?.estimatedDeliveryDate}}" display-format="DDD DD.MM HH:mm" readonly="true">
-        </ion-datetime>
-      </div>
-    </ion-item>
-    <ion-item *ngIf='states2?.length === 0'><i>Keine Auszahlung</i></ion-item>
+    <app-transfer-status [states]="states2" sourceAccount="tw2" (cancelled)="cancelTransfer('tw2',$event)">
+    </app-transfer-status>
+    <ion-item *ngIf='states2?.length === 0'><i>Keine Auszahlung in letzter Woche</i></ion-item>
   </ion-list>
 </ion-content>

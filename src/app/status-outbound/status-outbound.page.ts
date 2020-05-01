@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TwclientService, DtoTransferStatus, DtoResponseCancelTransfer } from '../services/twclient.service';
+import { TwclientService, DtoTransferStatus, DtoResponseCancelTransfer, DtoResponseQuote } from '../services/twclient.service';
 import { AlertController } from '@ionic/angular';
 
 // const statusfilter1 = 'incoming_payment_waiting';
@@ -25,13 +25,19 @@ export class StatusOutboundPage implements OnInit {
   }
 
   segmentChanged(ev: any) {
-    console.log('Segment changed', ev);
     this.segment = ev.detail.value;
   }
 
   async getTransferStatus(event) {
     this.twClient.getTransferStatus(statusfilter, 'tw1').subscribe((data: DtoTransferStatus[]) => {
       this.states1 = data;
+      // this.states1.forEach((value: DtoTransferStatus) => {
+      //   if (value.status === 'processing') {
+      //     this.twClient.queryQuote('tw1', value.quoteUuid).subscribe((quote: DtoResponseQuote) => {
+      //       value.targetValue = quote.targetAmount;
+      //     });
+      //   }
+      // });
       if (event != null) { event.target.complete(); }
     });
     this.twClient.getTransferStatus(statusfilter, 'tw2').subscribe((data: DtoTransferStatus[]) => {

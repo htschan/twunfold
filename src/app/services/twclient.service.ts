@@ -12,11 +12,12 @@ import * as uuid from 'uuid';
 })
 export class TwclientService {
   private rates: DtoRate[] = new Array();
-  private receipients: DtoReceipient[] = new Array();
+  private receipientsMap = new Map();
   private banks: DtoBank[] = new Array();
 
   constructor(private storage: Storage) {
     this.getReceipients('tw1');
+    this.getReceipients('tw2');
     this.getThaiBanks('tw1');
   }
 
@@ -72,7 +73,7 @@ export class TwclientService {
     this.getProfile(source).pipe(take(1)).subscribe((profile: any) => {
       from(f({ account: source, profileId: profile.id })).pipe(take(1)).subscribe((data: any) => {
         console.log(data);
-        this.receipients = data.data;
+        this.receipientsMap.set(source, data.data);
       });
     });
   }
@@ -85,13 +86,13 @@ export class TwclientService {
     });
   }
 
-  getAccountHolderName(accountNumber: number): string {
-    const account = this.receipients.find(x => x.id === accountNumber);
+  getAccountHolderName(source: string, accountNumber: number): string {
+    const account = this.receipientsMap.get(source).find(x => x.id === accountNumber);
     return account.accountHolderName;
   }
 
-  getAccountBankCode(accountNumber: number): number {
-    const account = this.receipients.find(x => x.id === accountNumber);
+  getAccountBankCode(source: string, accountNumber: number): number {
+    const account = this.receipientsMap.get(source).find(x => x.id === accountNumber);
     return account.details.bankCode;
   }
 
@@ -100,10 +101,10 @@ export class TwclientService {
     return bank.title;
   }
 
-  getBankNameByAccountNumber(accountNumber: number): string {
-    const bankCode = this.getAccountBankCode(accountNumber);
+  getBankNameByAccountNumber(source: string, accountNumber: number): string {
+    const bankCode = this.getAccountBankCode(source, accountNumber);
     if (bankCode == null) {
-      return '???';
+      return '';
     }
     return this.getBankNameByCode(bankCode);
   }
@@ -138,6 +139,12 @@ export class TwclientService {
     );
   }
 
+  @Cacheable({ maxAge: 10 * 1000 })
+  queryQuote(source: string, quoteId: string): Observable<DtoResponseQuote> {
+    const f = firebase.functions().httpsCallable('queryQuote');
+    return from(f({ account: source, quoteId })).pipe(map(result => result.data));
+  }
+
   sendMoney(source: string, target: string, profile: number, quote: number): Observable<string> {
     const f = firebase.functions().httpsCallable('createTransfer');
     const fund = firebase.functions().httpsCallable('postFund');
@@ -150,12 +157,12 @@ export class TwclientService {
       referenceText: 'to my friend',
       quoteId: quote
     })).pipe(
-      //      switchMap(result => from(fund({ account: source, profileId: profile, transferId: result.id }))),
+      switchMap((result: any) =>
+        from(fund({ account: source, profileId: profile, transferId: result.data.id }))),
       map(result => {
-        console.log(result);
+        console.log(result.data);
         return result.data;
       }));
-
   }
 
   cancelTransfer(source: string, transferId: number): Observable<DtoResponseCancelTransfer> {
@@ -287,6 +294,7 @@ export class DtoTransferStatus {
   targetAccount: number;
   sourceAccount: number;
   quote: number;
+  quoteUuid: string;
   status: string;
   reference: string;
   rate: number;

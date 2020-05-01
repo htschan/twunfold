@@ -7,6 +7,7 @@ import { IonicModule } from '@ionic/angular';
 import { StatusOutboundPageRoutingModule } from './status-outbound-routing.module';
 
 import { StatusOutboundPage } from './status-outbound.page';
+import { TransferStatusComponent } from './components/transfer-status/transfer-status.component';
 
 @NgModule({
   imports: [
@@ -15,6 +16,9 @@ import { StatusOutboundPage } from './status-outbound.page';
     IonicModule,
     StatusOutboundPageRoutingModule
   ],
-  declarations: [StatusOutboundPage]
+  declarations: [
+    StatusOutboundPage,
+    TransferStatusComponent
+  ]
 })
-export class StatusOutboundPageModule {}
+export class StatusOutboundPageModule { }
