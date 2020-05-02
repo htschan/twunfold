@@ -200,20 +200,20 @@ export class DtoProfile {
   email: string;
   active: boolean;
   details: {
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    occupation: string;
-    address: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    occupation?: string;
+    address?: {
       city: string;
       countryCode: string;
       postCode: string;
       state: string;
       firstLine: string
     },
-    dateOfBirth: string;
+    dateOfBirth?: string;
     avatar: string;
-    primaryAddress: string;
+    primaryAddress?: string;
   };
 }
 

@@ -3,6 +3,9 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/send-money"></ion-back-button>
     </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-icon [routerLink]="['/overview']" name="home"></ion-icon>
+    </ion-buttons>
     <ion-title>Geld senden</ion-title>
   </ion-toolbar>
 </ion-header>
@@ -17,8 +20,12 @@
           <ion-header>La-Iad</ion-header>
         </ion-col>
         <ion-col size="8">
-          <p><ion-label>Saldo/ยอดเงินในบัญชี</ion-label></p>
-          <p><ion-label>CHF {{balance2?.amount?.value.toFixed(2)}}</ion-label></p>
+          <p>
+            <ion-label>Saldo/ยอดเงินในบัญชี</ion-label>
+          </p>
+          <p>
+            <ion-label>CHF {{balance2?.amount?.value.toFixed(2)}}</ion-label>
+          </p>
         </ion-col>
       </ion-row>
     </ion-grid>
@@ -31,8 +38,12 @@
           <ion-header>Hans</ion-header>
         </ion-col>
         <ion-col size="8">
-          <p><ion-label>Saldo/ยอดเงินในบัญชี</ion-label></p>
-          <p><ion-label>CHF {{balance1?.amount?.value.toFixed(2)}}</ion-label></p>
+          <p>
+            <ion-label>Saldo/ยอดเงินในบัญชี</ion-label>
+          </p>
+          <p>
+            <ion-label>CHF {{balance1?.amount?.value.toFixed(2)}}</ion-label>
+          </p>
         </ion-col>
       </ion-row>
     </ion-grid>

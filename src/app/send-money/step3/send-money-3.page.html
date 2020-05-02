@@ -3,6 +3,9 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/send-money"></ion-back-button>
     </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-icon [routerLink]="['/overview']" name="home"></ion-icon>
+    </ion-buttons>
     <ion-title>Betrag</ion-title>
   </ion-toolbar>
 </ion-header>
@@ -67,6 +70,12 @@
   </ng-container>
   <ion-label>{{source}}</ion-label>
   <ion-label>{{target}}</ion-label>
+  <div>
+    {{status}}
+  </div>
+  <div>
+    {{errstr}}
+  </div>
   <!-- <p>{{itemForm | json}}</p> -->
   <ng-template #loadingOrError>
     <ng-container *ngIf="errorObject; else loading">

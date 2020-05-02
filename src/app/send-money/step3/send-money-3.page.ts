@@ -21,6 +21,8 @@ export class SendMoney3Page implements OnInit {
   errorObject = null;
   asyncQuote$: Observable<DtoResponseQuote> = null;
   initPage = false;
+  errstr;
+  status;
 
   constructor(
     private twClient: TwclientService,
@@ -48,6 +50,8 @@ export class SendMoney3Page implements OnInit {
   }
 
   getQuote() {
+    this.status = '';
+    this.errstr = '';
     const amount = this.itemForm.get('amount').value;
     this.initPage = true;
     this.asyncQuote$ = this.twClient.getQuote(amount, this.source).pipe(
@@ -67,8 +71,9 @@ export class SendMoney3Page implements OnInit {
         {
           text: 'Ja, senden/ตกลง', handler: data => {
             this.twClient.sendMoney(this.source, this.target, profile, quote).subscribe(
-              d => {
-                console.log(d);
+              (d: any) => {
+                this.status = d.status;
+                this.errstr = d.errorCode;
               },
               err => console.log(err),
               () => console.log('yay'));

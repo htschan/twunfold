@@ -61,3 +61,8 @@ View current settings:
 
 [ngx-cacheable](https://github.com/angelnikolov/ngx-cacheable)
 
+
+# Resources
+
+[Cloud Functions for Firebase samples](https://github.com/firebase/functions-samples)
+[Using Typescript with Cloud Functions](https://github.com/firebase/functions-samples/tree/master/typescript-getting-started)
